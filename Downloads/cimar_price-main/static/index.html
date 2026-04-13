@@ -1,0 +1,1960 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Ciments du Maroc — Petcoke Intelligence</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3.0.1/dist/chartjs-plugin-annotation.min.js"></script>
+<style>
+/* ═══════ DESIGN TOKENS ═══════════════════════════════════════════════════ */
+:root {
+  /* Brand: Ciments du Maroc */
+  --brand:    #1a5c28;   /* dark logo green */
+  --brand2:   #2e7d32;   /* mid green */
+  --brand3:   #43a047;   /* lighter green */
+  --accent:   #66bb6a;   /* bright green for highlights */
+
+  /* UI surfaces — light theme */
+  --ink:      #0f1f12;   /* near-black with green tint */
+  --ink2:     #1a2d1d;   /* dark green text */
+  --paper:    #ffffff;   /* pure white */
+  --warm:     #f4f9f5;   /* very light green-white */
+  --surface:  #ffffff;
+  --rule:     #d4e8d8;   /* light green border */
+  --rule2:    #b8d8be;
+  --muted:    #4a6b4f;   /* medium green-grey text */
+  --ghost:    #7a9b7f;   /* light muted text */
+
+  /* Keep semantic aliases */
+  --gold:     #2e7d32;
+  --gold2:    #43a047;
+  --green:    #1a5c28;
+  --red:      #c62828;
+  --blue:     #1565c0;
+  --amber:    #e65100;
+  --slate:    #455a64;
+
+  /* Signal colors */
+  --sig-buy:    #1a5c28;
+  --sig-watch:  #e65100;
+  --sig-mon:    #455a64;
+  --sig-avoid:  #c62828;
+
+  --font-ui:    'Nunito', sans-serif;
+  --font-mono:  'JetBrains Mono', monospace;
+  --font-serif: 'Nunito', sans-serif;
+
+  --shadow-sm: 0 1px 2px rgba(0,0,0,.04), 0 2px 8px rgba(0,0,0,.05);
+  --shadow:    0 2px 4px rgba(0,0,0,.04), 0 6px 24px rgba(0,0,0,.07);
+  --shadow-lg: 0 4px 8px rgba(0,0,0,.05), 0 16px 48px rgba(0,0,0,.10);
+}
+
+/* ═══════ RESET & BASE ════════════════════════════════════════════════════ */
+*   { box-sizing:border-box; margin:0; padding:0 }
+html{ height:100% }
+body{
+  font-family: var(--font-ui);
+  background:  var(--paper);
+  color:       var(--ink);
+  font-size:   13px;
+  line-height: 1.5;
+  height:      100%;
+  overflow:    hidden;
+}
+
+/* ═══════ TOP BAR ═════════════════════════════════════════════════════════ */
+#topbar {
+  position: fixed; top:0; left:0; right:0; height:56px; z-index:300;
+  background: #ffffff; color: var(--ink);
+  display: flex; align-items: center; padding: 0 22px;
+  border-bottom: 2px solid var(--brand);
+  box-shadow: 0 2px 12px rgba(26,92,40,.10);
+}
+.tb-logo {
+  font-family: var(--font-ui); font-size:15px; font-weight:800;
+  letter-spacing:-.01em; margin-right:28px; flex-shrink:0; color:var(--brand);
+}
+.tb-logo em { font-style:normal; color:var(--brand3) }
+.tb-ticker-rail {
+  flex: 1; overflow: hidden; position: relative;
+  display: flex; align-items: center; gap:0;
+}
+.tb-ticker {
+  display: flex; gap: 28px; white-space: nowrap;
+  animation: scroll-left 40s linear infinite;
+}
+@keyframes scroll-left {
+  0%   { transform: translateX(0) }
+  100% { transform: translateX(-50%) }
+}
+.tk-item {
+  display: flex; align-items: center; gap:9px;
+  font-family: var(--font-mono); font-size:11px; color:rgba(26,92,40,.5);
+}
+.tk-sym { color:var(--brand); font-weight:600; letter-spacing:.03em }
+.tk-val { color:var(--brand2); font-weight:700 }
+.tk-chg { font-size:10px }
+.tk-up  { color:#4ade80 }
+.tk-dn  { color:#f87171 }
+.tk-sep { color:#c8e0cb; user-select:none }
+.tb-right {
+  display:flex; align-items:center; gap:18px; flex-shrink:0;
+}
+.live-badge {
+  display:flex; align-items:center; gap:5px;
+  font-family:var(--font-mono); font-size:10px; color:var(--ghost);
+}
+.live-dot {
+  width:6px; height:6px; border-radius:50%; background:#4ade80;
+  animation: pulse 2.5s ease-in-out infinite;
+}
+@keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.5;transform:scale(.8)} }
+.live-dot.stale { background:#f87171; animation:none }
+#ts-label { font-family:var(--font-mono); font-size:10px; color:var(--ghost) }
+
+/* ═══════ APP SHELL ════════════════════════════════════════════════════════ */
+#app { display:flex; height:100vh; padding-top:56px }
+
+/* ═══════ SIDEBAR ══════════════════════════════════════════════════════════ */
+#sidebar {
+  width:272px; flex-shrink:0; background:#f4f9f5;
+  border-right:1px solid var(--rule); overflow-y:auto;
+  display:flex; flex-direction:column;
+}
+#sidebar::-webkit-scrollbar { width:4px }
+#sidebar::-webkit-scrollbar-thumb { background:var(--rule2) }
+
+.sb-header {
+  padding:18px 18px 14px; border-bottom:1px solid #2d2d28;
+}
+.sb-hdr-title {
+  font-family:var(--font-mono); font-size:9px; font-weight:400;
+  text-transform:uppercase; letter-spacing:.14em; color:rgba(255,255,255,.3);
+  margin-bottom:2px;
+}
+.sb-hdr-val {
+  font-family:var(--font-serif); font-size:24px; font-weight:300;
+  color:var(--gold2); letter-spacing:-.01em; line-height:1;
+}
+.sb-hdr-sub { font-size:10.5px; color:rgba(255,255,255,.3); margin-top:3px }
+
+.sb-section { padding:14px 16px; border-bottom:1px solid var(--rule) }
+.sb-sec-lbl {
+  font-family:var(--font-mono); font-size:9px; text-transform:uppercase;
+  letter-spacing:.13em; color:var(--brand2); margin-bottom:10px;
+  display:flex; align-items:center; gap:7px;
+}
+.sb-sec-lbl::after { content:''; flex:1; height:1px; background:var(--rule) }
+
+.sb-field { margin-bottom:11px }
+.sb-lbl {
+  display:flex; justify-content:space-between; align-items:center;
+  font-size:11px; color:var(--muted); margin-bottom:5px;
+}
+.sb-lbl strong { font-family:var(--font-mono); color:var(--brand); font-weight:600 }
+
+/* Dark selects */
+select, input[type=number] {
+  width:100%; font-family:var(--font-ui); font-size:12px;
+  background:#ffffff; color:var(--ink);
+  border:1px solid var(--rule); border-radius:5px; outline:none;
+  transition:border-color .15s;
+}
+select { padding:7px 28px 7px 10px; cursor:pointer;
+  appearance:none;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='9' height='5'%3E%3Cpath d='M0 0l4.5 5L9 0z' fill='%232e7d32'/%3E%3C/svg%3E");
+  background-repeat:no-repeat; background-position:right 10px center;
+}
+select:focus, input[type=number]:focus { border-color:var(--brand2); box-shadow:0 0 0 2px rgba(46,125,50,.15) }
+input[type=number] { padding:7px 10px }
+
+/* Range sliders */
+input[type=range] {
+  -webkit-appearance:none; appearance:none;
+  width:100%; height:3px; background:var(--rule); border:none;
+  border-radius:1px; cursor:pointer; outline:none;
+  margin:6px 0 2px; padding:0;
+}
+input[type=range]::-webkit-slider-thumb {
+  -webkit-appearance:none; width:13px; height:13px;
+  background:var(--brand); border-radius:50%; cursor:pointer;
+  border:2px solid #fff; box-shadow:0 1px 4px rgba(0,0,0,.2); transition:transform .1s;
+}
+input[type=range]::-webkit-slider-thumb:hover { transform:scale(1.2) }
+.range-labels { display:flex; justify-content:space-between; font-family:var(--font-mono); font-size:9px; color:var(--ghost) }
+
+/* CTA button */
+.run-btn {
+  width:100%; padding:10px 0; margin-top:4px;
+  background:var(--brand); color:#fff; border:none;
+  border-radius:6px; font-family:var(--font-ui); font-size:13px; font-weight:700;
+  letter-spacing:.04em; cursor:pointer; transition:all .15s;
+}
+.run-btn:hover { background:var(--brand2); transform:translateY(-1px); box-shadow:0 4px 12px rgba(26,92,40,.3) }
+.run-btn:disabled { background:#c8dccb; color:#8aab8e; transform:none; cursor:not-allowed }
+
+/* Preset chips */
+.preset-grid { display:grid; grid-template-columns:1fr 1fr; gap:5px }
+.preset-chip {
+  background:#fff; border:1px solid var(--rule); border-radius:5px;
+  font-family:var(--font-ui); font-size:11px; color:var(--muted);
+  padding:6px 0; text-align:center; cursor:pointer; transition:all .15s;
+}
+.preset-chip:hover { border-color:var(--brand2); color:var(--brand2) }
+.preset-chip.active { background:#e8f5e9; border-color:var(--brand); color:var(--brand); font-weight:700 }
+
+/* Mini KPIs in sidebar */
+.mini-kpis { display:grid; grid-template-columns:1fr 1fr; gap:1px; background:var(--rule) }
+.mini-kpi {
+  background:#fff; padding:11px 14px;
+  cursor:default;
+}
+.mk-lbl { font-family:var(--font-mono); font-size:9px; text-transform:uppercase; letter-spacing:.1em; color:var(--ghost); margin-bottom:4px }
+.mk-val { font-family:var(--font-mono); font-size:14px; color:var(--brand); font-weight:600; line-height:1 }
+.mk-sub { font-size:10px; color:var(--ghost); margin-top:2px }
+
+/* Model compare table in sidebar */
+.mc-table { width:100%; border-collapse:collapse }
+.mc-table td { font-family:var(--font-mono); font-size:10px; padding:3px 0;
+  color:var(--muted); border-bottom:1px solid var(--rule) }
+.mc-table td:last-child { text-align:right; color:var(--ink) }
+.mc-table tr.best td { color:var(--brand); font-weight:600 }
+
+/* ═══════ MAIN CONTENT ═════════════════════════════════════════════════════ */
+#main {
+  flex:1; overflow:hidden; display:flex; flex-direction:column;
+}
+#nav-tabs {
+  background:#fff; border-bottom:2px solid var(--rule);
+  display:flex; align-items:center; padding:0 22px; gap:2px; flex-shrink:0;
+}
+.nav-tab {
+  font-family:var(--font-ui); font-size:12px; font-weight:600;
+  letter-spacing:.04em; color:var(--ghost);
+  padding:14px 16px; border:none; background:none; cursor:pointer;
+  border-bottom:2px solid transparent; transition:all .15s;
+  margin-bottom:-1px; white-space:nowrap;
+}
+.nav-tab:hover { color:var(--brand2) }
+.nav-tab.active { color:var(--brand); border-bottom-color:var(--brand) }
+.nav-spacer { flex:1 }
+.signal-banner {
+  display:flex; align-items:center; gap:10px;
+  padding:4px 14px; border-radius:20px; font-size:11px; font-weight:700;
+  letter-spacing:.06em; font-family:var(--font-ui);
+}
+.sb-buy     { background:#e8f5e9; color:var(--brand); border:1px solid var(--rule2) }
+.sb-watch   { background:#fff3e0; color:#e65100; border:1px solid #ffcc80 }
+.sb-monitor { background:#eceff1; color:#455a64; border:1px solid #b0bec5 }
+.sb-avoid   { background:#ffebee; color:#c62828; border:1px solid #ef9a9a }
+
+#content { flex:1; overflow-y:auto; padding:20px 22px; background:#f4f9f5 }
+#content::-webkit-scrollbar { width:5px }
+#content::-webkit-scrollbar-thumb { background:var(--rule2) }
+
+/* ═══════ CARDS ════════════════════════════════════════════════════════════ */
+.card {
+  background:#ffffff; border:1px solid var(--rule);
+  border-radius:8px; box-shadow:var(--shadow-sm);
+  overflow:hidden;
+}
+.card-dark {
+  background:var(--warm); border:1px solid var(--rule);
+  border-radius:8px; box-shadow:var(--shadow-sm);
+  overflow:hidden;
+}
+.cp  { padding:18px 20px }
+.cp-sm { padding:13px 16px }
+.ct {
+  font-family:var(--font-ui); font-size:13px; font-weight:700;
+  letter-spacing:.03em; color:var(--ink); margin-bottom:2px;
+}
+.cs {
+  font-family:var(--font-mono); font-size:10px; color:var(--ghost);
+  margin-bottom:14px;
+}
+.ct-dark { color:rgba(255,255,255,.85) }
+.cs-dark { color:rgba(255,255,255,.3) }
+
+/* ═══════ GRIDS ════════════════════════════════════════════════════════════ */
+.g2 { display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:14px }
+.g3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px; margin-bottom:14px }
+.g4 { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin-bottom:14px }
+.g5 { display:grid; grid-template-columns:repeat(5,1fr); gap:10px; margin-bottom:14px }
+.g13{ display:grid; grid-template-columns:1.3fr 1fr; gap:14px; margin-bottom:14px }
+.g31{ display:grid; grid-template-columns:1fr 1.3fr; gap:14px; margin-bottom:14px }
+
+/* ═══════ KPI BLOCKS ═══════════════════════════════════════════════════════ */
+.kpi {
+  padding:16px 18px; background:var(--brand); border-radius:8px;
+  border:1px solid var(--brand2);
+}
+.kpi-lbl {
+  font-family:var(--font-mono); font-size:9px; text-transform:uppercase;
+  letter-spacing:.12em; color:rgba(255,255,255,.55); margin-bottom:8px;
+}
+.kpi-val {
+  font-family:var(--font-ui); font-size:28px; font-weight:700;
+  line-height:1; color:#ffffff; letter-spacing:-.02em;
+}
+.kpi-sub { font-size:10.5px; color:rgba(255,255,255,.55); margin-top:4px }
+.kpi-delta { font-family:var(--font-mono); font-size:11px; font-weight:500; margin-top:5px }
+.kd-up  { color:#f87171 }
+.kd-dn  { color:#4ade80 }
+.kd-flat{ color:rgba(255,255,255,.4) }
+.kpi-rule { height:1px; background:linear-gradient(90deg,var(--gold),transparent); margin:10px 0 0; opacity:.3 }
+
+/* ═══════ CHARTS ═══════════════════════════════════════════════════════════ */
+.ch { position:relative }
+.ch-180 { height:180px }
+.ch-220 { height:220px }
+.ch-260 { height:260px }
+.ch-300 { height:300px }
+.ch-140 { height:140px }
+
+/* ═══════ TABLES ═══════════════════════════════════════════════════════════ */
+.tbl { width:100%; border-collapse:collapse }
+.tbl th {
+  font-family:var(--font-mono); font-size:9.5px; font-weight:500;
+  text-transform:uppercase; letter-spacing:.09em; color:var(--ghost);
+  padding:9px 14px; border-bottom:1px solid var(--rule); text-align:left;
+  white-space:nowrap; background:#f4f9f5;
+}
+.tbl td {
+  padding:10px 14px; font-size:12.5px; color:var(--muted);
+  border-bottom:1px solid var(--warm); vertical-align:middle;
+}
+.tbl tbody tr:hover td { background:#f4f9f5 }
+.tbl tbody tr:last-child td { border-bottom:none }
+.tbl .tv { font-weight:700; color:var(--ink); font-family:var(--font-mono); font-size:13px }
+.tbl .tm { font-family:var(--font-mono); font-size:11.5px }
+.tbl .tg { color:var(--brand); font-weight:600; font-family:var(--font-mono) }
+.tbl .tr { color:var(--red);   font-weight:600; font-family:var(--font-mono) }
+.tbl .tf { color:var(--muted); font-family:var(--font-mono); font-size:11.5px }
+
+/* Dark table variant */
+.tbl-dark th { background:#f4f9f5; color:var(--ghost); border-color:var(--rule) }
+.tbl-dark td { color:var(--muted); border-color:var(--warm) }
+.tbl-dark tbody tr:hover td { background:#f4f9f5 }
+.tbl-dark .tv { color:var(--ink) }
+
+/* ═══════ BADGES ═══════════════════════════════════════════════════════════ */
+.badge {
+  display:inline-flex; align-items:center; gap:4px;
+  padding:3px 8px; border-radius:3px; font-family:var(--font-mono);
+  font-size:10px; font-weight:500; white-space:nowrap; letter-spacing:.04em;
+}
+.bd { width:5px; height:5px; border-radius:50% }
+.b-buy   { background:rgba(26,107,60,.12); color:var(--green) }
+.b-buy   .bd { background:var(--green) }
+.b-watch { background:rgba(138,96,16,.12); color:var(--amber) }
+.b-watch .bd { background:var(--amber) }
+.b-mon   { background:rgba(58,74,90,.12);  color:var(--slate) }
+.b-mon   .bd { background:var(--slate) }
+.b-avoid { background:rgba(160,41,26,.12); color:var(--red)   }
+.b-avoid .bd { background:var(--red)   }
+
+/* ═══════ SCENARIO STRIP ══════════════════════════════════════════════════ */
+.sc-strip { display:grid; grid-template-columns:repeat(7,1fr); gap:8px; margin-bottom:14px }
+.sc-card {
+  background:#fff; border:1px solid var(--rule); border-radius:7px;
+  padding:12px 10px; text-align:center; cursor:pointer; transition:all .15s;
+}
+.sc-card:hover { border-color:#555 }
+.sc-card.active { border-color:var(--brand); background:#e8f5e9 }
+.sc-name {
+  font-family:var(--font-mono); font-size:9px; text-transform:uppercase;
+  letter-spacing:.1em; color:var(--ghost); margin-bottom:6px;
+}
+.sc-price {
+  font-family:var(--font-ui); font-size:18px; font-weight:700;
+  line-height:1; color:var(--ink);
+}
+.sc-pct { font-family:var(--font-mono); font-size:9.5px; margin-top:3px }
+
+/* ═══════ PROC CARDS ═══════════════════════════════════════════════════════ */
+.proc-card {
+  border:1px solid var(--rule); border-radius:7px; padding:14px 16px;
+  margin-bottom:9px; background:#fff; transition:box-shadow .15s;
+}
+.proc-card:hover { box-shadow:var(--shadow-sm) }
+.proc-card.rec   { border-color:var(--brand); background:#e8f5e9 }
+.pc-head { display:flex; justify-content:space-between; align-items:center; margin-bottom:9px }
+.pc-lbl  { font-weight:700; font-size:12.5px; color:var(--ink) }
+.pc-tag  { font-family:var(--font-mono); font-size:9px; padding:3px 8px; border-radius:3px }
+.pc-tag-rec  { background:rgba(26,92,40,.12); color:var(--brand) }
+.pc-tag-hed  { background:rgba(21,101,192,.1);  color:var(--blue)  }
+.pc-row  { display:flex; gap:18px }
+.pc-m    .ml { font-family:var(--font-mono); font-size:9px; color:var(--ghost); margin-bottom:2px }
+.pc-m    .mv { font-family:var(--font-mono); font-size:13px; font-weight:500; color:var(--ink) }
+.mv-save { color:var(--green) !important }
+.mv-cost { color:var(--red) !important }
+
+/* ═══════ HBARS ════════════════════════════════════════════════════════════ */
+.hbar { margin-bottom:12px }
+.hb-head { display:flex; justify-content:space-between; margin-bottom:4px }
+.hb-lbl  { font-size:11.5px; color:var(--muted) }
+.hb-val  { font-family:var(--font-mono); font-size:11.5px; font-weight:500; color:var(--ink) }
+.hb-track { background:var(--rule); border-radius:2px; height:6px; overflow:hidden }
+.hb-fill  { height:100%; border-radius:2px; transition:width .7s cubic-bezier(.4,0,.2,1) }
+
+/* ═══════ MODEL STATS ══════════════════════════════════════════════════════ */
+.stat-row { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-bottom:12px }
+.stat-box {
+  background:#f4f9f5; border:1px solid var(--rule); border-radius:6px;
+  padding:10px 12px; text-align:center;
+}
+.stat-v { font-family:var(--font-mono); font-size:16px; font-weight:600; color:var(--brand) }
+.stat-l { font-size:10px; color:var(--ghost); margin-top:2px }
+
+/* ═══════ FNOTE ════════════════════════════════════════════════════════════ */
+.fnote {
+  padding:9px 18px; background:#f4f9f5; border-top:1px solid var(--rule);
+  font-family:var(--font-mono); font-size:9.5px; color:var(--ghost); line-height:1.65;
+}
+
+/* ═══════ ALERTS ═══════════════════════════════════════════════════════════ */
+.alert { padding:10px 14px; border-radius:6px; font-size:12px; line-height:1.7; margin-bottom:12px }
+.a-warn { background:#fff8e1; color:#e65100; border:1px solid #ffcc80 }
+.a-info { background:#e8f5e9; color:var(--brand2);  border:1px solid var(--rule2) }
+.a-risk { background:#ffebee; color:#c62828; border:1px solid #ef9a9a }
+
+/* ═══════ SECTION HEADERS ═════════════════════════════════════════════════ */
+.sec-hdr {
+  display:flex; justify-content:space-between; align-items:center;
+  margin-bottom:14px;
+}
+.sec-title { font-family:var(--font-ui); font-size:16px; font-weight:700; color:var(--ink) }
+.sec-sub   { font-family:var(--font-mono); font-size:10px; color:var(--ghost); margin-top:1px }
+
+/* ═══════ BRIEFING ═════════════════════════════════════════════════════════ */
+.brief-block { margin-bottom:24px }
+.bb-title {
+  font-family:var(--font-mono); font-size:9px; font-weight:500;
+  text-transform:uppercase; letter-spacing:.14em; color:var(--ghost);
+  padding-bottom:7px; border-bottom:1px solid var(--rule); margin-bottom:12px;
+}
+.bb-body { font-size:13.5px; color:var(--muted); line-height:1.85; white-space:pre-line }
+.signal-hero {
+  display:flex; align-items:center; gap:16px; padding:16px 20px;
+  border-radius:8px; margin-bottom:20px; border:1px solid;
+}
+.sh-indicator { width:12px; height:12px; border-radius:50%; flex-shrink:0 }
+.sh-text { font-family:var(--font-serif); font-size:20px; font-weight:300; flex:1 }
+.sh-meta { font-family:var(--font-mono); font-size:10px; color:var(--ghost) }
+
+/* ═══════ CORRELATION MATRIX ══════════════════════════════════════════════ */
+.corr-cell {
+  width:36px; height:36px; display:inline-flex; align-items:center;
+  justify-content:center; font-family:var(--font-mono); font-size:9px;
+  font-weight:500; border-radius:3px;
+}
+
+/* ═══════ TOAST ════════════════════════════════════════════════════════════ */
+#toast {
+  position:fixed; bottom:20px; right:20px; z-index:999;
+  background:#fff; color:var(--ink); border:1px solid var(--rule2);
+  padding:10px 18px; border-radius:7px; font-family:var(--font-mono); font-size:11px;
+  display:none; align-items:center; gap:10px; box-shadow:var(--shadow-lg);
+}
+.spin {
+  width:12px; height:12px; border:2px solid #444; border-top-color:var(--gold2);
+  border-radius:50%; animation:sp .7s linear infinite; flex-shrink:0;
+}
+@keyframes sp { to { transform:rotate(360deg) } }
+
+/* ═══════ SECTION FADE-IN ══════════════════════════════════════════════════ */
+.tab-pane { display:none }
+.tab-pane.active { display:block; animation:fadein .2s ease }
+@keyframes fadein { from{opacity:0;transform:translateY(5px)} to{opacity:1;transform:translateY(0)} }
+
+/* ═══════ CORRELATION CHART ════════════════════════════════════════════════ */
+.corr-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:2px; margin-bottom:8px }
+.corr-item { border-radius:4px; padding:8px; text-align:center }
+.ci-lbl { font-size:9px; color:rgba(255,255,255,.4); margin-bottom:3px; font-family:var(--font-mono) }
+.ci-val { font-family:var(--font-mono); font-size:13px; font-weight:500 }
+
+/* ═══════ RESPONSIVE SCROLLBAR ════════════════════════════════════════════ */
+#content::-webkit-scrollbar { width:5px }
+#content::-webkit-scrollbar-track { background:transparent }
+#content::-webkit-scrollbar-thumb { background:var(--rule2); border-radius:3px }
+
+/* ═══════ MINI SPARKLINE ═══════════════════════════════════════════════════ */
+.spark { display:inline-block; vertical-align:middle }
+
+/* ═══════ VAR ROW ══════════════════════════════════════════════════════════ */
+.var-row {
+  display:flex; align-items:center; padding:8px 0;
+  border-bottom:1px solid var(--warm); gap:12px;
+}
+.var-row:last-child { border-bottom:none }
+.vr-lbl  { font-size:12px; color:var(--muted); width:160px; flex-shrink:0 }
+.vr-val  { font-family:var(--font-mono); font-size:12px; font-weight:500; color:var(--ink); width:70px; flex-shrink:0 }
+.vr-bar  { flex:1; background:var(--rule); height:4px; border-radius:2px; overflow:hidden }
+.vr-fill { height:100%; border-radius:2px }
+.vr-pct  { font-family:var(--font-mono); font-size:10px; color:var(--ghost); width:40px; text-align:right; flex-shrink:0 }
+</style>
+</head>
+<body>
+<!-- ═══ TOP BAR ══════════════════════════════════════════════════════════════ -->
+<div id="topbar">
+  <div class="tb-logo" style="display:flex;align-items:center;gap:12px;margin-right:28px;flex-shrink:0">
+    <svg version="1.2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1400 500" width="140" height="48">
+	<style>
+		.s0 { fill: #5eac2c } 
+		.s1 { fill: #004e2b } 
+		.s2 { fill: #004c2f } 
+	</style>
+	<g id="Calque 1">
+		<g id="&lt;Group&gt;">
+			<g id="&lt;Group&gt;">
+				<path id="&lt;Path&gt;" class="s0" d="m250.74 388.77c10.56 0 59.27 0 70.47 0v-60.44c-10.76 29.76-56 60.44-70.47 60.44z"/>
+				<path id="&lt;Compound Path&gt;" fill-rule="evenodd" class="s1" d="m333.92 259.11v142.19h-140.3c-58.94 0-106.72-47.78-106.72-106.72v-195.88h79.73c109.27 0 167.29 71.82 167.29 160.41zm-23.62-57.89c-24.8-54.93-65.07-90.42-154.89-90.42h-55.79v126.82c15.33-26.97 42.76-36.82 52.16-39.5 0 0 0.73-0.2 2-0.49q0.53-0.12 1.06-0.22c12.68-2.61 61.97-9.23 88.22 37.73q0.54 0.91 1.05 1.83 0.01 0.03 0.02 0.05 0.21 0.4 0.41 0.79 0.95 1.83 1.81 3.7 0.29 0.63 0.57 1.26 0.22 0.5 0.43 1.01c4.23 9.91 5.76 18.85 5.45 26.84q0.01 0.69 0.01 1.38c-0.74 33.33-29.89 61.09-63.3 60.26-25.52-0.63-48.15-24.85-46.98-50.26 1.02-22.17 24.89-40.45 46.61-35.69 13.88 3.04 23.62 17.17 21.63 31.37-1.72 12.22-11.77 20.44-23.97 19.25-7.98-0.77-14.11-4.42-15.64-12.94q-0.02-0.1-0.03-0.2c-1.62-9.49 12.44-12.28 14.62-2.9l0.06 0.27c0.28 1.18 1.33 2.01 2.55 2.03 5.18 0.08 8.68-2.44 8.89-8.55 0.3-8.67-4.72-14.29-14.08-15.18-16.27-1.54-29.27 13.14-26.51 29.25 3.32 19.44 21.41 32.47 41.03 29.3 33.84-5.46 50.88-39.48 35.79-71.45-15.13-32.08-50.25-45.16-84.74-31.56-46.49 18.32-62.03 69.42-42.54 116.11 24.84 51.52 85.05 71.74 141.08 47.39 67.38-29.29 90.21-105.44 63.02-177.28zm10.91 127.11c-10.76 29.76-56 60.44-70.47 60.44 10.56 0 59.27 0 70.47 0z"/>
+			</g>
+			<g id="&lt;Group&gt;">
+				<path id="&lt;Compound Path&gt;" class="s2" d="m435.98 382.35v-15.71h-19.07v15.71h-8.19v-39.27h8.19v16.04h19.07v-16.04h8.19v39.27z"/>
+				<path id="&lt;Compound Path&gt;" fill-rule="evenodd" class="s2" d="m449.22 367.43c0-9.2 6.84-15.49 15.59-15.49 9.42 0 15.48 6.29 15.48 15.49 0 1.12 0 1.51-0.11 3.19h-22.89c0.85 3.26 3.59 5.89 8.53 5.89 3.76 0 5.95-1 8.08-3.25l4.82 4.82c-2.69 2.47-6.5 4.83-13.24 4.83-10.49 0-16.26-6.28-16.26-15.48zm23.33-3.09c-0.45-3.14-2.91-6-7.4-6-4.88 0-7.3 2.92-8.08 6z"/>
+				<path id="&lt;Compound Path&gt;" class="s2" d="m484.72 342.07c0-2.58 1.74-4.37 4.66-4.37 2.92 0 4.66 1.79 4.66 4.37 0 2.58-1.74 4.38-4.66 4.38-2.92 0-4.66-1.8-4.66-4.38zm0.79 40.28v-29.85h7.74v29.85z"/>
+				<path id="&lt;Compound Path&gt;" fill-rule="evenodd" class="s2" d="m523.82 340.84h7.74v41.51h-7.34l-0.17-3.93c-1.85 2.41-5.28 4.49-10.21 4.49-8.75 0-15.49-6.73-15.49-15.48 0-8.75 6.74-15.49 15.49-15.49 4.77 0 8.08 1.91 9.98 4.21zm-8.8 35.62c5.1 0 9.03-3.87 9.03-9.03 0-5.05-3.93-9.03-9.03-9.03-5.11 0-9.04 3.98-9.04 9.03 0 5.16 3.93 9.03 9.04 9.03z"/>
+				<path id="&lt;Compound Path&gt;" fill-rule="evenodd" class="s2" d="m536.44 367.43c0-9.2 6.85-15.49 15.6-15.49 9.42 0 15.48 6.29 15.48 15.49 0 1.12 0 1.51-0.11 3.19h-22.89c0.84 3.26 3.59 5.89 8.53 5.89 3.76 0 5.94-1 8.07-3.25l4.83 4.82c-2.69 2.47-6.51 4.83-13.24 4.83-10.49 0-16.27-6.28-16.27-15.48zm23.34-3.09c-0.45-3.14-2.92-6-7.41-6-4.88 0-7.29 2.92-8.07 6z"/>
+				<path id="&lt;Compound Path&gt;" class="s2" d="m572.51 382.35v-41.51h7.74v41.51z"/>
+				<path id="&lt;Compound Path&gt;" fill-rule="evenodd" class="s2" d="m594.55 356.15c1.91-2.3 5.22-4.21 9.99-4.21 8.75 0 15.48 6.74 15.48 15.49 0 8.75-6.73 15.48-15.48 15.48-4.94 0-8.36-2.08-10.21-4.49l-0.17 3.93h-7.35v-41.51h7.74zm8.81 2.24c-5.1 0-9.03 3.98-9.03 9.03 0 5.16 3.93 9.03 9.03 9.03 5.11 0 9.03-3.87 9.03-9.03 0-5.05-3.92-9.03-9.03-9.03z"/>
+				<path id="&lt;Compound Path&gt;" fill-rule="evenodd" class="s2" d="m623.55 367.43c0-9.2 6.85-15.49 15.6-15.49 9.42 0 15.48 6.29 15.48 15.49 0 1.12 0 1.51-0.11 3.19h-22.89c0.84 3.26 3.59 5.89 8.53 5.89 3.76 0 5.94-1 8.08-3.25l4.82 4.82c-2.69 2.47-6.51 4.83-13.24 4.83-10.49 0-16.27-6.28-16.27-15.48zm23.34-3.09c-0.45-3.14-2.92-6-7.4-6-4.88 0-7.3 2.92-8.08 6z"/>
+				<path id="&lt;Compound Path&gt;" class="s2" d="m659.62 382.35v-16.94c0-7.86 5.05-12.91 12.9-12.91h6.96v6.96h-5.16c-4.94 0-6.96 2.02-6.96 6.96v15.93z"/>
+				<path id="&lt;Compound Path&gt;" fill-rule="evenodd" class="s2" d="m683.86 389.75l4.82-4.82c2.41 2.41 5.22 3.93 10.27 3.93 5.04 0 8.3-3.26 8.3-8.31v-1.85c-1.91 2.3-5.22 4.21-9.99 4.21-8.75 0-15.48-6.73-15.48-15.48 0-8.75 6.73-15.49 15.48-15.49 4.94 0 8.36 2.08 10.21 4.49l0.17-3.93h7.35v27.27c0 9.53-6.51 15.48-16.04 15.48-7.3 0-12.29-2.47-15.09-5.5zm14.58-13.29c5.11 0 9.03-3.87 9.03-9.03 0-5.05-3.92-9.04-9.03-9.04-5.1 0-9.03 3.99-9.03 9.04 0 5.16 3.93 9.03 9.03 9.03z"/>
+				<path id="&lt;Compound Path&gt;" class="s2" d="m734.31 382.35v-39.27h7.74l13.18 19.75 13.41-19.75h7.52v39.27h-8.19v-25.47l-10.94 15.93h-3.59l-10.94-15.93v25.47z"/>
+				<path id="&lt;Compound Path&gt;" fill-rule="evenodd" class="s2" d="m781.26 367.43c0-8.75 6.73-15.49 15.48-15.49 4.94 0 8.36 2.08 10.21 4.49l0.17-3.93h7.35v29.85h-7.35l-0.17-3.93c-1.85 2.41-5.27 4.49-10.21 4.49-8.75 0-15.48-6.73-15.48-15.48zm16.66 9.03c5.1 0 9.03-3.87 9.03-9.03 0-5.05-3.93-9.04-9.03-9.04-5.11 0-9.03 3.99-9.03 9.04 0 5.16 3.92 9.03 9.03 9.03z"/>
+				<path id="&lt;Compound Path&gt;" class="s2" d="m825.07 359.46h-6.84v-6.96h6.84v-8.13h7.74v8.13h10.88v6.96h-10.88v10.21q0 5.72 5.72 5.72h5.16v6.96h-6.5c-7.97 0-12.12-4.15-12.12-12.12z"/>
+				<path id="&lt;Compound Path&gt;" fill-rule="evenodd" class="s2" d="m847 367.43c0-9.2 6.84-15.49 15.6-15.49 9.42 0 15.48 6.29 15.48 15.49 0 1.12 0 1.51-0.11 3.19h-22.89c0.84 3.26 3.59 5.89 8.52 5.89 3.76 0 5.95-1 8.08-3.25l4.83 4.82c-2.7 2.47-6.51 4.83-13.24 4.83-10.49 0-16.27-6.28-16.27-15.48zm23.34-3.09c-0.45-3.14-2.92-6-7.41-6-4.88 0-7.29 2.92-8.08 6z"/>
+				<path id="&lt;Compound Path&gt;" class="s2" d="m882.9 382.35v-16.94c0-7.86 5.05-12.91 12.9-12.91h6.96v6.96h-5.16c-4.94 0-6.96 2.02-6.96 6.96v15.93z"/>
+				<path id="&lt;Compound Path&gt;" class="s2" d="m906.29 342.07c0-2.58 1.74-4.37 4.66-4.37 2.91 0 4.65 1.79 4.65 4.37 0 2.58-1.74 4.38-4.65 4.38-2.92 0-4.66-1.8-4.66-4.38zm0.79 40.28v-29.85h7.74v29.85z"/>
+				<path id="&lt;Compound Path&gt;" fill-rule="evenodd" class="s2" d="m919.92 367.43c0-8.75 6.73-15.49 15.48-15.49 4.94 0 8.36 2.08 10.21 4.49l0.17-3.93h7.35v29.85h-7.35l-0.17-3.93c-1.85 2.41-5.27 4.49-10.21 4.49-8.75 0-15.48-6.73-15.48-15.48zm16.66 9.03c5.11 0 9.03-3.87 9.03-9.03 0-5.05-3.92-9.04-9.03-9.04-5.1 0-9.03 3.99-9.03 9.04 0 5.16 3.93 9.03 9.03 9.03z"/>
+				<path id="&lt;Compound Path&gt;" class="s2" d="m959.64 382.35v-41.51h7.74v41.51z"/>
+				<path id="&lt;Compound Path&gt;" class="s2" d="m971.36 377.86l4.82-4.82c2.25 2.24 6.51 3.59 10.66 3.59 4.27 0 5.95-0.9 5.95-2.47 0-1.68-1.68-2.47-8.25-3.7-7.68-1.46-12.23-3.82-12.23-9.43 0-5.83 6.01-9.09 13.75-9.09 6.51 0 11.22 2.19 13.85 4.83l-4.82 4.82c-1.8-1.79-4.99-3.36-9.14-3.36-3.82 0-5.89 0.89-5.89 2.46 0 1.58 1.4 2.25 8.58 3.71 6.95 1.4 11.89 3.59 11.89 9.42 0 5.84-5.33 9.09-14.19 9.09-7.29 0-12.06-2.13-14.98-5.05z"/>
+			</g>
+			<g id="&lt;Group&gt;">
+				<path id="&lt;Path&gt;" class="s1" d="m455.32 166.5h-33.81q-4.62 0-6.73-2.03-2.12-2.02-2.12-6.42v-12.73h-11.04v13.83q0 8.71 4.18 13.22 4.18 4.51 13.03 4.51h47.58v-40.4h-11.09z"/>
+				<path id="&lt;Path&gt;" class="s1" d="m434.19 192.95q1.32 0.79 2.82 0.79 1.58 0 2.9-0.79 1.32-0.79 2.09-2.13 0.77-1.35 0.77-2.93 0-1.54-0.77-2.86-0.77-1.32-2.09-2.11-1.32-0.8-2.9-0.8-1.5 0-2.82 0.8-1.32 0.79-2.09 2.13-0.77 1.34-0.77 2.84 0 1.54 0.77 2.9 0.77 1.37 2.09 2.16z"/>
+				<path id="&lt;Path&gt;" class="s1" d="m624.7 127.5q1.32 0.79 2.86 0.79 1.54 0 2.84-0.79 1.3-0.8 2.07-2.09 0.77-1.3 0.77-2.8 0-1.58-0.75-2.93-0.75-1.34-2.07-2.13-1.32-0.79-2.86-0.79-1.54 0-2.88 0.79-1.35 0.79-2.12 2.13-0.77 1.35-0.77 2.93 0 1.5 0.8 2.8 0.79 1.29 2.11 2.09z"/>
+				<path id="&lt;Compound Path&gt;" fill-rule="evenodd" class="s1" d="m808.25 116.76h11.18v60.12h-325.29q0 9.29-4.49 14.42-4.49 5.13-13.64 5.13h-4.58v-10.61h3.48q4.18 0 6.11-2.57 1.94-2.58 1.94-6.63v-40.14h11.18v30.02h114.05v-12.24q0-17.78 17.21-17.78h13.08v10.38h-10.3q-4.63 0-6.72 2.03-2.09 2.02-2.09 6.47v11.14h93.19v-30.02h21.26q17.25 0 17.25 17.78v12.24h57.18zm-68.36 38.6q0-4.44-2.11-6.47-2.11-2.02-6.73-2.02h-7.31v19.63h16.15z"/>
+				<path id="&lt;Path&gt;" class="s1" d="m831.14 176.88h11.18v-60.12h-11.18z"/>
+				<path id="&lt;Path&gt;" class="s1" d="m908.42 133.44q1.38 0.79 2.97 0.79 1.49 0 2.79-0.79 1.3-0.79 2.09-2.11 0.8-1.32 0.8-2.78 0-1.58-0.77-2.92-0.77-1.35-2.09-2.14-1.33-0.79-2.82-0.79-1.59 0-2.97 0.79-1.39 0.79-2.2 2.14-0.82 1.34-0.82 2.92 0 1.5 0.82 2.8 0.81 1.3 2.2 2.09z"/>
+				<path id="&lt;Path&gt;" class="s1" d="m894.44 133.44q1.32 0.79 2.86 0.79 1.54 0 2.84-0.79 1.3-0.79 2.07-2.09 0.77-1.3 0.77-2.8 0-1.58-0.75-2.92-0.75-1.35-2.07-2.14-1.32-0.79-2.86-0.79-1.54 0-2.88 0.79-1.34 0.79-2.11 2.14-0.77 1.34-0.77 2.92 0 1.5 0.79 2.8 0.79 1.3 2.11 2.09z"/>
+				<path id="&lt;Path&gt;" class="s1" d="m1055.37 127.5q1.32 0.79 2.86 0.79 1.54 0 2.84-0.79 1.3-0.8 2.07-2.09 0.77-1.3 0.77-2.8 0-1.58-0.75-2.93-0.75-1.34-2.07-2.13-1.32-0.79-2.86-0.79-1.54 0-2.88 0.79-1.34 0.79-2.11 2.13-0.77 1.35-0.77 2.93 0 1.5 0.79 2.8 0.79 1.29 2.11 2.09z"/>
+				<path id="&lt;Compound Path&gt;" fill-rule="evenodd" class="s1" d="m941.58 176.88q-0.01 0-0.02 0-0.01 0-0.02 0h-53.44q-8.84 0-13.03-4.51-4.18-4.51-4.18-13.22v-13.83h11.05v12.73q0 4.4 2.11 6.42 2.12 2.03 6.74 2.03h33.8v-30.02h11.1v30.02h5.85q0.01 0 0.02 0 0.01 0 0.02 0h110.97v-30.02h11.1v30.02h74.78v-30.02h21.26q17.26 0 17.26 17.78v12.24h57.27v-27.12h11.18v27.12h10.3v-27.12h11.18v27.12h10.25v-30.02h11.18v40.4zm208.03-10.38h16.16v-11.14q0-4.45-2.11-6.47-2.12-2.03-6.74-2.03h-7.31z"/>
+				<path id="&lt;Path&gt;" class="s1" d="m1311.2 116.76h-11.18v60.12h11.18z"/>
+				<path id="&lt;Path&gt;" class="s1" d="m1303.37 199.33v-4.71q0-1.58 0.66-2.22 0.66-0.64 2.29-0.64h5.5v-5.24h-5.68q-4.44 0-6.36 1.85-1.91 1.85-1.91 6.08v4.88h-4.14v5.15h19.37v-5.15z"/>
+			</g>
+			<g id="&lt;Group&gt;">
+				<path id="&lt;Path&gt;" class="s1" d="m423.95 246.98q2.51-2.61 5.94-3.96 3.44-1.36 7.3-1.36 4.55 0 8.27 1.84 3.72 1.84 6.72 5.12l10.15-11.5q-2.9-3.48-6.91-5.95-4.01-2.46-8.65-3.72-4.65-1.26-9.48-1.26-7.64 0-14.16 2.61-6.53 2.61-11.36 7.35-4.84 4.74-7.5 11.12-2.66 6.38-2.65 13.92 0 7.64 2.56 14.07 2.56 6.43 7.25 11.12 4.69 4.69 11.12 7.25 6.43 2.56 14.06 2.56 5.03 0 9.91-1.21 4.88-1.21 8.9-3.33 4.01-2.13 6.33-4.74l-8.02-12.76q-1.75 1.93-4.16 3.48-2.42 1.54-5.17 2.37-2.76 0.82-5.76 0.82-4.54 0-8.26-1.36-3.73-1.35-6.38-3.91-2.66-2.56-4.06-6.19-1.41-3.62-1.41-8.07 0-4.55 1.45-8.12 1.45-3.58 3.97-6.19z"/>
+				<path id="&lt;Path&gt;" class="s1" d="m474.61 295.22h15.56v-51.33h-15.56z"/>
+				<path id="&lt;Path&gt;" class="s1" d="m482.44 217.69q-4.35 0-6.87 2.22-2.51 2.22-2.51 5.8 0 3.87 2.47 5.95 2.46 2.07 6.91 2.07 4.25 0 6.72-2.22 2.46-2.22 2.46-5.8 0-3.87-2.46-5.95-2.47-2.07-6.72-2.07z"/>
+				<path id="&lt;Compound Path&gt;" fill-rule="evenodd" class="s1" d="m647.86 258.39q1.74 4.74 1.64 10.34l-0.1 4.26h-35.18q0.43 1.59 1.2 2.99 1.79 3.19 5.22 4.93 3.43 1.74 8.17 1.74 3.19 0 5.8-0.96 2.61-0.97 5.61-3.29l7.25 10.25q-3 2.51-6.38 4.2-3.39 1.7-6.91 2.52-3.53 0.82-7.11 0.82-8.51 0-14.84-3.38-6.33-3.39-9.76-9.33-3.44-5.95-3.44-13.59 0-5.99 1.94-10.97 1.93-4.98 5.46-8.56 3.53-3.57 8.31-5.56 4.79-1.98 10.49-1.98 5.42 0 9.86 1.94 4.45 1.93 7.74 5.41 3.29 3.48 5.03 8.22zm-33.73 5.8h20.96v-0.2q-0.19-2.41-1.49-4.2-1.31-1.79-3.39-2.85-2.08-1.07-4.69-1.07-3.86 0-6.52 1.5-2.66 1.5-4.01 4.3-0.54 1.15-0.86 2.52z"/>
+				<path id="&lt;Path&gt;" class="s1" d="m745.5 230.93h-15.56v12.96h-9.09v13.63h9.09v37.7h15.56v-37.7h9.86v-13.63h-9.86z"/>
+				<path id="&lt;Path&gt;" class="s1" d="m802.15 270.76q-1.93-2.12-5.17-3.72-3.24-1.59-7.78-2.85-3.58-0.97-5.75-1.74-2.18-0.77-3.05-1.26-0.97-0.67-1.5-1.5-0.53-0.82-0.53-1.88 0-0.87 0.39-1.6 0.38-0.72 1.11-1.25 0.72-0.54 1.84-0.78 1.11-0.24 2.56-0.24 1.93 0 4.15 0.82 2.23 0.82 4.45 2.13 2.22 1.3 3.87 2.95l8.22-9.19q-2.61-2.41-5.95-4.15-3.33-1.74-7.15-2.71-3.82-0.97-8.08-0.97-5.41 0-10.05 1.98-4.64 1.99-7.49 5.56-2.86 3.58-2.86 8.32 0 3.09 1.02 5.6 1.01 2.52 2.95 4.45 2.12 2.13 5.46 3.77 3.34 1.65 7.88 2.81 3.19 0.77 5.22 1.49 2.03 0.73 2.8 1.21 1.65 0.97 1.65 2.9 0 0.97-0.39 1.7-0.39 0.72-1.11 1.25-0.73 0.53-1.69 0.82-0.97 0.29-2.23 0.29-3.38 0-7.15-1.4-3.77-1.4-6.77-4.4l-9.47 8.12q3.48 4.16 9.28 6.53 5.8 2.37 13.15 2.37 6.18 0 10.97-2.18 4.79-2.17 7.54-5.99 2.76-3.82 2.76-8.75 0-2.51-0.73-4.69-0.72-2.17-2.37-3.82z"/>
+				<path id="&lt;Compound Path&gt;" fill-rule="evenodd" class="s1" d="m884.81 223.68h15.57v71.54h-14.5l-0.41-5.41q-1.34 1.51-3.22 2.75-2.56 1.7-5.75 2.66-3.19 0.97-6.77 0.97-6.58 0-11.84-3.38-5.27-3.39-8.27-9.43-3-6.04-3-13.78 0-7.73 3-13.77 3-6.05 8.27-9.53 5.27-3.48 11.94-3.48 3.48 0 6.72 1.07 3.23 1.06 5.8 2.9 1.36 0.98 2.46 2.1zm0.39 45.92q0-4.25-1.45-7.35-1.45-3.09-4.01-4.78-2.57-1.69-6.14-1.7-3.48 0.01-6.05 1.7-2.56 1.69-4.01 4.78-1.45 3.1-1.45 7.35 0 4.16 1.45 7.25 1.45 3.1 4.01 4.79 2.57 1.69 6.05 1.69 3.57 0 6.14-1.69 2.56-1.69 4.01-4.79 1.45-3.09 1.45-7.25z"/>
+				<path id="&lt;Path&gt;" class="s1" d="m948.52 282.21h-9.08q-4.07 0-6.34-2.66-2.27-2.66-2.27-7.4v-29.39h-15.56v31.71q0 6.48 2.17 11.07 2.18 4.6 6.24 7.06 4.06 2.47 9.66 2.47l30.74-0.18v-0.79h0.01v-51.34h-15.57z"/>
+				<path id="&lt;Path&gt;" class="s1" d="m701.72 245.23q-4.07-2.47-9.67-2.47l-30.73 0.19v0.78h-0.02v51.34h15.57v-39.45h9.09q4.06 0 6.33 2.66 2.27 2.66 2.27 7.4v29.39h15.57v-31.71q0-6.48-2.18-11.07-2.17-4.6-6.23-7.06z"/>
+				<path id="&lt;Path&gt;" class="s1" d="m579.8 245.23q-4.06-2.47-9.67-2.47l-22.97 0.14-22.97-0.14q-5.61 0-9.67 2.47-4.06 2.46-6.23 7.06-2.18 4.59-2.18 11.07v31.71h15.57v-29.39q0-4.74 2.27-7.4 2.27-2.66 6.33-2.66h9.09v39.45h0.02 15.55 0.01v-39.45h9.09q4.06 0 6.33 2.66 2.28 2.66 2.28 7.4v29.39h15.56v-31.71q0-6.48-2.17-11.07-2.18-4.6-6.24-7.06z"/>
+				<path id="&lt;Path&gt;" class="s1" d="m1049.36 259l-19.34-31.45h-14.79v67.67h16.15v-20.49q0-9.67-0.44-16.58c-0.07-1.1-0.2-2.16-0.29-3.24l15.13 23.78h6.57l15.69-24.3c-0.13 1.44-0.27 2.88-0.36 4.34q-0.44 7.1-0.44 16v20.49h16.05v-67.67h-14.31z"/>
+				<path id="&lt;Compound Path&gt;" fill-rule="evenodd" class="s1" d="m1140.72 250.65q2.61 3.97 2.61 10.06v34.51h-14.99v-4.59q-0.07 0.07-0.14 0.14-2.85 2.52-6.19 3.97-3.33 1.45-7.01 1.45-4.83 0-8.75-1.93-3.91-1.94-6.19-5.37-2.27-3.43-2.27-8.07 0-3.97 1.45-6.96 1.45-3 4.31-4.98 2.85-1.98 7.15-3 4.3-1.02 10.01-1.02h7.63v-1.16q0-3.96-2.17-5.84-2.18-1.89-6.04-1.89-3.77 0-6.72 1.4-2.95 1.4-5.66 4.59l-9.28-8.99q4.64-4.73 10.63-7.44 6-2.71 13.06-2.71 6.47 0 11.21 1.94 4.74 1.93 7.35 5.89zm-12.38 30.09v-6.11h-7.25q-2.03 0-3.57 0.34-1.55 0.34-2.61 1.06-1.07 0.73-1.6 1.69-0.53 0.97-0.53 2.32 0 1.45 0.77 2.52 0.77 1.06 2.08 1.64 1.31 0.58 3.05 0.58 2.51 0 4.78-0.82 2.27-0.82 4.06-2.37c0.31-0.26 0.55-0.57 0.82-0.85z"/>
+				<path id="&lt;Compound Path&gt;" fill-rule="evenodd" class="s1" d="m1252.77 255.73q3.58 6.04 3.58 13.87 0 7.64-3.58 13.68-3.58 6.05-9.81 9.48-6.24 3.43-14.26 3.43-7.93 0-14.22-3.43-6.28-3.43-9.86-9.48-3.58-6.04-3.57-13.68-0.01-7.83 3.57-13.87 3.58-6.04 9.86-9.48 6.29-3.43 14.22-3.43 8.02 0 14.26 3.43 6.23 3.44 9.81 9.48zm-12.28 13.87q0.1-3.96-1.45-7.01-1.55-3.04-4.25-4.73-2.71-1.7-6.09-1.7-3.39 0-6.1 1.74-2.7 1.74-4.25 4.74-1.55 3-1.55 6.96 0 3.77 1.55 6.77 1.55 3 4.25 4.74 2.71 1.74 6.1 1.74 3.48 0 6.13-1.74 2.66-1.74 4.21-4.74 1.55-3 1.45-6.77z"/>
+				<path id="&lt;Path&gt;" class="s1" d="m1286.41 258.05q2.81-1.69 6.48-1.69 2.42 0 4.64 0.77 2.22 0.77 4.06 2.13 1.84 1.35 3.1 2.99l8.41-10.24q-3.29-4.26-9.04-6.72-5.76-2.47-12.62-2.47-7.44 0-13.39 3.48-5.95 3.48-9.33 9.53-3.38 6.04-3.38 13.77 0 7.54 3.38 13.59 3.38 6.04 9.33 9.52 5.95 3.48 13.39 3.48 6.57 0 12.47-2.47 5.9-2.46 9.19-6.52l-8.41-10.25q-1.55 1.74-3.34 3-1.79 1.25-3.92 1.93-2.12 0.68-4.64 0.68-3.48 0-6.28-1.74-2.8-1.74-4.4-4.69-1.59-2.95-1.59-6.62 0-3.77 1.54-6.77 1.55-3 4.35-4.69z"/>
+				<path id="&lt;Path&gt;" class="s1" d="m1199.75 243.02l-23.55-0.14q-5.61 0-9.67 2.46-4.06 2.47-6.23 7.06-2.18 4.59-2.18 11.07v30.85c0 0.47 0.38 0.86 0.86 0.86h13.85c0.47 0 0.86-0.39 0.86-0.86v-28.53q0-4.74 2.27-7.4 2.27-2.66 6.33-2.66h8.28c0.26 0 0.5-0.11 0.66-0.31l9.17-11c0.46-0.55 0.07-1.4-0.65-1.4z"/>
+			</g>
+		</g>
+	</g>
+</svg>
+    <div style="line-height:1.2">
+      
+      <div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:#7a9b7f;letter-spacing:.12em;text-transform:uppercase;margin-top:1px">Petcoke Intelligence Platform</div>
+    </div>
+  </div>
+  <div class="tb-ticker-rail">
+    <div class="tb-ticker" id="ticker">
+      <span class="tk-item"><span class="tk-sym">BZ=F</span><span class="tk-val" id="tk-brent">—</span><span class="tk-chg" id="tk-brent-chg">—</span></span>
+      <span class="tk-sep">·</span>
+      <span class="tk-item"><span class="tk-sym">NG=F</span><span class="tk-val" id="tk-gas">—</span><span class="tk-chg" id="tk-gas-chg">—</span></span>
+      <span class="tk-sep">·</span>
+      <span class="tk-item"><span class="tk-sym">PETCOKE EST</span><span class="tk-val" id="tk-petcoke">—</span></span>
+      <span class="tk-sep">·</span>
+      <span class="tk-item"><span class="tk-sym">LANDED</span><span class="tk-val" id="tk-landed">—</span></span>
+      <span class="tk-sep">·</span>
+      <span class="tk-item"><span class="tk-sym">MAD/USD</span><span class="tk-val" id="tk-mad">9.94</span></span>
+      <!-- duplicate for seamless scroll -->
+      <span class="tk-item"><span class="tk-sym">BZ=F</span><span class="tk-val" id="tk-brent2">—</span></span>
+      <span class="tk-sep">·</span>
+      <span class="tk-item"><span class="tk-sym">NG=F</span><span class="tk-val" id="tk-gas2">—</span></span>
+      <span class="tk-sep">·</span>
+      <span class="tk-item"><span class="tk-sym">PETCOKE EST</span><span class="tk-val" id="tk-petcoke2">—</span></span>
+      <span class="tk-sep">·</span>
+      <span class="tk-item"><span class="tk-sym">LANDED</span><span class="tk-val" id="tk-landed2">—</span></span>
+      <span class="tk-sep">·</span>
+      <span class="tk-item"><span class="tk-sym">MAD/USD</span><span class="tk-val" id="tk-mad2">9.94</span></span>
+    </div>
+  </div>
+  <div class="tb-right">
+    <div class="live-badge">
+      <div class="live-dot" id="live-dot"></div>
+      <span id="live-label">LIVE</span>
+    </div>
+    <div id="ts-label">—</div>
+  </div>
+</div>
+
+<!-- ═══ APP ══════════════════════════════════════════════════════════════════ -->
+<div id="app">
+
+  <!-- SIDEBAR -->
+  <div id="sidebar">
+    <!-- Live KPIs -->
+    <div class="mini-kpis">
+      <div class="mini-kpi"><div class="mk-lbl">Brent</div><div class="mk-val" id="sb-brent">—</div><div class="mk-sub">$/bbl · live</div></div>
+      <div class="mini-kpi"><div class="mk-lbl">Petcoke</div><div class="mk-val" id="sb-petcoke">—</div><div class="mk-sub">$/t · est.</div></div>
+      <div class="mini-kpi"><div class="mk-lbl">Nat Gas</div><div class="mk-val" id="sb-gas">—</div><div class="mk-sub">$/MMBtu · live</div></div>
+      <div class="mini-kpi"><div class="mk-lbl">Freight</div><div class="mk-val" id="sb-freight">—</div><div class="mk-sub">$/t · BDI est.</div></div>
+    </div>
+
+    <!-- Scenario -->
+    <div class="sb-section">
+      <div class="sb-sec-lbl">Scenario</div>
+      <div class="sb-field">
+        <div class="sb-lbl">Market scenario <strong id="lbl-sc">Base</strong></div>
+        <select id="p-scenario" onchange="updateScenarioLabel()">
+          <option value="base">Base — moderate stability</option>
+          <option value="bear">Bear — OPEC+ unwind, demand soft</option>
+          <option value="bull">Bull — supply cuts, EM recovery</option>
+          <option value="contango">Contango — steep forward curve</option>
+          <option value="backwd">Backwardation — inventory draw</option>
+          <option value="crisis">Crisis — geopolitical shock</option>
+          <option value="crash">Crash — demand collapse</option>
+        </select>
+      </div>
+      <div class="sb-field">
+        <div class="sb-lbl">Forecast horizon <strong id="lbl-hz">6 months</strong></div>
+        <select id="p-horizon" onchange="document.getElementById('lbl-hz').textContent=this.value+' months'">
+          <option value="3">3 months</option>
+          <option value="6" selected>6 months</option>
+          <option value="9">9 months</option>
+          <option value="12">12 months</option>
+        </select>
+      </div>
+      <div class="sb-field">
+        <div class="sb-lbl">Data window <strong id="lbl-win">240 months</strong></div>
+        <select id="p-window" onchange="document.getElementById('lbl-win').textContent=this.value+' months'">
+          <option value="24">24 months (recent)</option>
+          <option value="60">60 months (5 yr)</option>
+          <option value="120">120 months (10 yr)</option>
+          <option value="180">180 months (15 yr)</option>
+          <option value="240" selected>240 months (20 yr — full)</option>
+        </select>
+      </div>
+      <div class="sb-field">
+        <div class="sb-lbl">Neural network model <strong id="lbl-mdl">CNN Temporal</strong></div>
+        <select id="p-model" onchange="document.getElementById('lbl-mdl').textContent=this.options[this.selectedIndex].text.split('—')[0].trim()">
+          <option value="cnn_temporal" selected>CNN Temporal (1D) — full 20-yr dataset</option>
+          <option value="ols_multi">OLS Multi — + Gas + Coal (reference)</option>
+          <option value="ols_simple">OLS Simple — Coal only (baseline)</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Signal thresholds -->
+    <div class="sb-section">
+      <div class="sb-sec-lbl">Signal Thresholds</div>
+      <div class="sb-field">
+        <div class="sb-lbl">Buy threshold <strong id="lbl-buy">−3.0%</strong></div>
+        <input type="range" id="p-buy" min="-15" max="-0.5" value="-3" step="0.5"
+          oninput="document.getElementById('lbl-buy').textContent=parseFloat(this.value).toFixed(1)+'%'">
+        <div class="range-labels"><span>−15%</span><span>−0.5%</span></div>
+      </div>
+      <div class="sb-field">
+        <div class="sb-lbl">Avoid threshold <strong id="lbl-avoid">+3.0%</strong></div>
+        <input type="range" id="p-avoid" min="0.5" max="15" value="3" step="0.5"
+          oninput="document.getElementById('lbl-avoid').textContent='+'+parseFloat(this.value).toFixed(1)+'%'">
+        <div class="range-labels"><span>+0.5%</span><span>+15%</span></div>
+      </div>
+    </div>
+
+    <!-- Procurement inputs -->
+    <div class="sb-section">
+      <div class="sb-sec-lbl">Procurement</div>
+      <div class="sb-field">
+        <div class="sb-lbl">Annual volume (t)</div>
+        <input type="number" id="p-annual" value="180000" min="5000" max="999999" step="5000">
+      </div>
+      <div class="sb-field">
+        <div class="sb-lbl">Order size (t)</div>
+        <input type="number" id="p-order" value="10000" min="500" max="100000" step="500">
+      </div>
+      <div class="sb-field">
+        <div class="sb-lbl">MAD / USD rate</div>
+        <input type="number" id="p-mad" value="9.94" min="8" max="15" step="0.01">
+      </div>
+    </div>
+
+    <!-- Price adjustments -->
+    <div class="sb-section">
+      <div class="sb-sec-lbl">Price Adjustments</div>
+      <div class="sb-field">
+        <div class="sb-lbl">Freight multiplier <strong id="lbl-fmult">1.00×</strong></div>
+        <input type="range" id="p-fmult" min="0.5" max="2.0" value="1.0" step="0.05"
+          oninput="document.getElementById('lbl-fmult').textContent=parseFloat(this.value).toFixed(2)+'×'">
+        <div class="range-labels"><span>0.5×</span><span>2.0×</span></div>
+      </div>
+      <div class="sb-field">
+        <div class="sb-lbl">Petcoke premium/disc <strong id="lbl-disc">$0/t</strong></div>
+        <input type="range" id="p-disc" min="-20" max="20" value="0" step="1"
+          oninput="document.getElementById('lbl-disc').textContent=(this.value>0?'+':'')+this.value+'$/t'">
+        <div class="range-labels"><span>−$20</span><span>+$20</span></div>
+      </div>
+      <div class="sb-field">
+        <div class="sb-lbl">Sulphur adjustment <strong id="lbl-sulph">$0/t</strong></div>
+        <input type="range" id="p-sulph" min="-10" max="10" value="0" step="0.5"
+          oninput="document.getElementById('lbl-sulph').textContent=(this.value>0?'+':'')+parseFloat(this.value).toFixed(1)+'$/t'">
+        <div class="range-labels"><span>−$10 (low-S)</span><span>+$10 (high-S)</span></div>
+      </div>
+    </div>
+
+    <!-- Monte Carlo settings -->
+    <div class="sb-section">
+      <div class="sb-sec-lbl">Monte Carlo</div>
+      <div class="sb-field">
+        <div class="sb-lbl">Simulations <strong id="lbl-nsim">1200</strong></div>
+        <select id="p-nsim" onchange="document.getElementById('lbl-nsim').textContent=this.value">
+          <option value="400">400 (fast)</option>
+          <option value="800">800</option>
+          <option value="1200" selected>1200 (default)</option>
+          <option value="2000">2000 (precise)</option>
+        </select>
+      </div>
+      <div class="sb-field">
+        <div class="sb-lbl">Random seed <strong id="lbl-seed">7</strong></div>
+        <input type="range" id="p-seed" min="1" max="99" value="7" step="1"
+          oninput="document.getElementById('lbl-seed').textContent=this.value">
+        <div class="range-labels"><span>1</span><span>99</span></div>
+      </div>
+    </div>
+
+    <!-- Presets -->
+    <div class="sb-section">
+      <div class="sb-sec-lbl">Quick Presets</div>
+      <div class="preset-grid">
+        <div class="preset-chip active" onclick="applyPreset('standard',this)">Standard</div>
+        <div class="preset-chip" onclick="applyPreset('conservative',this)">Conservative</div>
+        <div class="preset-chip" onclick="applyPreset('aggressive',this)">Aggressive</div>
+        <div class="preset-chip" onclick="applyPreset('crisis',this)">Crisis mode</div>
+        <div class="preset-chip" onclick="applyPreset('shortterm',this)">Short-term</div>
+        <div class="preset-chip" onclick="applyPreset('research',this)">Research</div>
+      </div>
+    </div>
+
+    <div class="sb-section">
+      <button class="run-btn" id="run-btn" onclick="runForecast()">RUN FORECAST</button>
+    </div>
+
+    <!-- Model compare -->
+    <div class="sb-section" id="sb-model-compare" style="display:none">
+      <div class="sb-sec-lbl">Model Windows</div>
+      <table class="mc-table" id="mc-table"></table>
+    </div>
+  </div>
+
+  <!-- MAIN -->
+  <div id="main">
+    <!-- Tabs -->
+    <div id="nav-tabs">
+      <button class="nav-tab active" onclick="showTab('overview',this)">Overview</button>
+      <button class="nav-tab" onclick="showTab('forecast',this)">Forecast & Model</button>
+      <button class="nav-tab" onclick="showTab('scenarios',this)">Scenarios</button>
+      <button class="nav-tab" onclick="showTab('procurement',this)">Procurement</button>
+      <button class="nav-tab" onclick="showTab('diagnostics',this)">Diagnostics</button>
+      <button class="nav-tab" onclick="showTab('briefing',this)">AI Briefing</button>
+      <div class="nav-spacer"></div>
+      <div class="signal-banner sb-monitor" id="main-signal-banner">
+        <div style="width:6px;height:6px;border-radius:50%;background:currentColor;opacity:.8" id="sig-dot"></div>
+        <span id="sig-txt">Loading...</span>
+      </div>
+    </div>
+
+    <!-- Content -->
+    <div id="content">
+
+      <!-- ══ OVERVIEW ══════════════════════════════════════════════════════ -->
+      <div class="tab-pane active" id="tab-overview">
+        <div class="g4" id="kpi-row" style="margin-bottom:14px"></div>
+        
+
+        <div class="g13">
+          <div class="card">
+            <div class="cp-sm" style="padding-bottom:8px">
+              <div class="ct">Price History &amp; 6-Month Forecast</div>
+              <div class="cs">USD/t · Historical OLS fit · Monte Carlo P10–P90 confidence band</div>
+            </div>
+            <div class="cp-sm" style="padding-top:0"><div class="ch ch-260"><canvas id="chart-main"></canvas></div></div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:14px">
+            <div class="card cp-sm">
+              <div class="ct">Coal / Petcoke Scatter</div>
+              <div class="cs">OLS regression line · R² coefficient</div>
+              <div class="ch ch-140"><canvas id="chart-scatter"></canvas></div>
+            </div>
+            <div class="card cp-sm">
+              <div class="ct">Price Ratio (Petcoke / Brent)</div>
+              <div class="cs">Historical ratio with ±1σ band</div>
+              <div class="ch ch-140"><canvas id="chart-ratio"></canvas></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="g3" id="insight-row"></div>
+      </div>
+
+      <!-- ══ FORECAST & MODEL ═══════════════════════════════════════════════ -->
+      <div class="tab-pane" id="tab-forecast">
+        <div class="g2" style="margin-bottom:14px">
+          <div class="card cp">
+            <div class="ct">OLS Regression Statistics</div>
+            <div class="cs" id="model-eq">Petcoke = α + β·Brent</div>
+            <div class="stat-row" id="model-stats-row"></div>
+            <div class="ch ch-140"><canvas id="chart-resid"></canvas></div>
+          </div>
+          <div class="card cp">
+            <div class="ct">Monte Carlo Distribution by Month</div>
+            <div class="cs">P05 / P25 / P75 / P95 bands · 1200 simulations</div>
+            <div class="ch ch-220"><canvas id="chart-mc"></canvas></div>
+          </div>
+        </div>
+        <div class="card" style="margin-bottom:14px">
+          <div class="cp-sm" style="padding-bottom:4px">
+            <div class="ct">Full Forecast Table — All Months</div>
+            <div class="cs">Point estimate + percentile bands + procurement signal</div>
+          </div>
+          <table class="tbl" id="fc-table">
+            <thead><tr>
+              <th>Month</th><th>Brent Fwd</th><th>Petcoke (P50)</th>
+              <th>P10</th><th>P25</th><th>P75</th><th>P90</th>
+              <th>Freight</th><th>Landed</th><th>vs. Now</th><th>Signal</th>
+            </tr></thead>
+            <tbody id="fc-tbody"></tbody>
+          </table>
+          <div class="fnote">Model: CNN Temporal (OLS+MLP hybrid) · 20-yr weekly dataset (1,044 obs) · Coal AR(1) scenario paths · MC seed <span id="fnote-seed">7</span> · n_sim=<span id="fnote-nsim">1200</span></div>
+        </div>
+
+        <div class="g2">
+          <div class="card cp">
+            <div class="ct">Coal AR(1) Forward Distribution</div>
+            <div class="cs">φ=<span id="ar1-phi">—</span> · 800-path simulation bands</div>
+            <div class="ch ch-180"><canvas id="chart-ar1"></canvas></div>
+          </div>
+          <div class="card cp">
+            <div class="ct">Petcoke / Brent Historical Ratio</div>
+            <div class="cs">Mean + ±1σ envelope</div>
+            <div class="ch ch-180"><canvas id="chart-ratio2"></canvas></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══ SCENARIOS ═════════════════════════════════════════════════════ -->
+      <div class="tab-pane" id="tab-scenarios">
+        <div class="sc-strip" id="sc-strip"></div>
+
+        <div class="card" style="margin-bottom:14px">
+          <div class="cp-sm" style="padding-bottom:4px">
+            <div class="ct">All Scenarios — 6-Month Price Paths</div>
+            <div class="cs">OLS forecast under each Brent assumption · Current scenario highlighted</div>
+          </div>
+          <div class="cp-sm" style="padding-top:0"><div class="ch ch-260"><canvas id="chart-scenarios"></canvas></div></div>
+        </div>
+
+        <div class="g2">
+          <div class="card">
+            <div class="cp-sm" style="padding-bottom:4px">
+              <div class="ct">Annual Cost Impact by Scenario</div>
+              <div class="cs">MAD million · <span id="sc-vol-lbl">180,000</span> t/year · MAD <span id="sc-mad-lbl">9.94</span>/USD</div>
+            </div>
+            <div class="cp-sm" style="padding-top:0"><div class="ch ch-220"><canvas id="chart-sc-cost"></canvas></div></div>
+          </div>
+          <div class="card cp">
+            <div class="ct">Scenario Signal Matrix</div>
+            <div class="cs">Best buy month and signal by scenario</div>
+            <div id="sc-matrix"></div>
+          </div>
+        </div>
+
+        <div class="card" style="margin-bottom:14px">
+          <div class="cp-sm" style="padding-bottom:4px">
+            <div class="ct">Scenario Comparison Table</div>
+            <div class="cs">All 7 scenarios · 6-month average petcoke price</div>
+          </div>
+          <table class="tbl" id="sc-table">
+            <thead><tr><th>Scenario</th><th>Assumption</th><th>Avg Petcoke</th><th>Min</th><th>Max</th><th>Avg Landed</th><th>Annual MAD (M)</th><th>vs Base</th><th>Best Month</th></tr></thead>
+            <tbody id="sc-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ══ PROCUREMENT ════════════════════════════════════════════════════ -->
+      <div class="tab-pane" id="tab-procurement">
+        <div class="g13">
+          <div>
+            <div class="card cp" style="margin-bottom:14px">
+              <div class="ct">Procurement Scenario Optimizer</div>
+              <div class="cs" id="proc-subtitle">Order: <span id="pc-order-lbl">10,000</span>t · Live petcoke + freight cost</div>
+              <div id="proc-cards"></div>
+            </div>
+            <div class="card cp">
+              <div class="ct">Optimal Purchase Window</div>
+              <div id="window-headline" style="font-family:var(--font-ui);font-size:12px;font-weight:600;color:var(--muted);margin-bottom:10px">Run forecast to see purchase windows</div>
+              <div id="purchase-window-strip" style="display:flex;gap:6px;margin-bottom:14px"></div>
+              <div class="ch ch-140"><canvas id="chart-window"></canvas></div>
+            </div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:14px">
+            <div class="card cp">
+              <div class="ct">Annual Spend Sensitivity</div>
+              <div class="cs">MAD impact under price scenarios · <span id="sens-vol-lbl">180k t/year</span></div>
+              <div id="sens-bars"></div>
+              <div style="background:var(--warm);border-radius:6px;padding:9px 12px;margin-top:8px;font-family:var(--font-mono);font-size:10.5px;color:var(--muted)">
+                $10/t swing = <strong style="color:var(--blue)" id="swing-val">—</strong> annual impact
+              </div>
+            </div>
+            <div class="card cp">
+              <div class="ct">Supply Concentration Risk</div>
+              <div class="cs">Import origin · Geopolitical exposure</div>
+              <div id="supply-risk"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══ DIAGNOSTICS ════════════════════════════════════════════════════ -->
+      <div class="tab-pane" id="tab-diagnostics">
+        <div class="g2">
+          <div class="card cp">
+            <div class="ct">Model Window Comparison</div>
+            <div class="cs">OLS stats for each training window size</div>
+            <div id="diag-window-table"></div>
+          </div>
+          <div class="card cp">
+            <div class="ct">Residual Distribution</div>
+            <div class="cs">OLS model fit quality · Heteroskedasticity check</div>
+            <div class="ch ch-180"><canvas id="chart-diag-resid"></canvas></div>
+          </div>
+        </div>
+        <div class="g3">
+          <div class="card cp">
+            <div class="ct">Petcoke / Brent Correlation</div>
+            <div class="cs">R² = <span id="diag-r2">—</span> · β = <span id="diag-beta">—</span></div>
+            <div class="ch ch-180"><canvas id="chart-diag-scatter"></canvas></div>
+          </div>
+          <div class="card cp">
+            <div class="ct">Coal AR(1) Diagnostics</div>
+            <div class="cs">φ = <span id="diag-phi">—</span> · Long-run mean: <span id="diag-lr-mean">—</span></div>
+            <div class="ch ch-180"><canvas id="chart-diag-ar1"></canvas></div>
+          </div>
+          <div class="card cp">
+            <div class="ct">Commodity Correlations</div>
+            <div class="cs">Pearson correlation · 24-month window</div>
+            <div id="corr-matrix"></div>
+          </div>
+        </div>
+        <div class="g2">
+          <div class="card cp">
+            <div class="ct">Historical Petcoke Decomposition</div>
+            <div class="cs">Explained vs. unexplained variance by month</div>
+            <div class="ch ch-180"><canvas id="chart-decomp"></canvas></div>
+          </div>
+          <div class="card cp">
+            <div class="ct">Price Level Analysis</div>
+            <div class="cs">Petcoke percentile rank vs. last 24 months</div>
+            <div id="price-rank"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══ BRIEFING ═══════════════════════════════════════════════════════ -->
+      <div class="tab-pane" id="tab-briefing">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+          <div>
+            <div style="font-family:var(--font-ui);font-size:16px;font-weight:700">Executive Procurement Briefing</div>
+            <div style="font-family:var(--font-mono);font-size:10px;color:var(--ghost);margin-top:2px">Generated from live model · Updates on every forecast run</div>
+          </div>
+          <button class="run-btn" style="width:auto;padding:10px 24px" onclick="runBriefing()">GENERATE BRIEFING</button>
+        </div>
+        <div id="briefing-signal" style="display:none;margin-bottom:16px"></div>
+        <div class="g2">
+          <div class="card" id="briefing-panel-1">
+            <div class="cp" id="briefing-left"><div style="text-align:center;padding:48px 0;color:var(--ghost);font-family:var(--font-mono);font-size:11px">Run forecast then click Generate Briefing</div></div>
+          </div>
+          <div class="card">
+            <div class="cp" id="briefing-right"></div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /content -->
+  </div><!-- /main -->
+</div><!-- /app -->
+
+<!-- TOAST -->
+<div id="toast"><div class="spin"></div><span id="toast-msg">Running...</span></div>
+<script>
+/* ══════════════════════════════════════════════════════════════════════════
+   CIMAR Frontend — Full interactive JS
+══════════════════════════════════════════════════════════════════════════ */
+
+Chart.register(window['chartjs-plugin-annotation'] || {});
+Chart.defaults.font.family = "'IBM Plex Mono', monospace";
+Chart.defaults.color        = '#7a7468';
+
+let DATA = null;
+let CHARTS = {};
+let PREV_LIVE = {};
+let LIVE_INTERVAL = null;
+let LAST_BRENT = null;
+
+// ── Utility ──────────────────────────────────────────────────────────────────
+const $ = id => document.getElementById(id);
+const r2 = v => Math.round(v*100)/100;
+
+function toast(msg, show=true) {
+  const el = $('toast');
+  if(show){ $('toast-msg').textContent=msg; el.style.display='flex'; }
+  else el.style.display='none';
+}
+
+function mkChart(id, cfg) {
+  if(CHARTS[id]){ CHARTS[id].destroy(); delete CHARTS[id]; }
+  const el = $(id); if(!el) return null;
+  CHARTS[id] = new Chart(el.getContext('2d'), cfg);
+  return CHARTS[id];
+}
+
+function baseOpts(yPrefix='$', showLegend=false, yMin=null, yMax=null) {
+  return {
+    responsive:true, maintainAspectRatio:false,
+    interaction:{ mode:'index', intersect:false },
+    plugins:{
+      legend:{ display:showLegend, labels:{ font:{size:10}, boxWidth:10, padding:12, color:'#7a7468' }},
+      tooltip:{
+        backgroundColor:'rgba(255,255,255,.97)', titleColor:'#0f1f12',
+        bodyColor:'#3d5e42', borderColor:'#c8e0cb', borderWidth:1,
+        padding:10, cornerRadius:5,
+      }
+    },
+    scales:{
+      x:{ grid:{ color:'rgba(26,92,40,.06)', drawBorder:false }, ticks:{ color:'#7a9b7f', font:{size:9.5}, maxRotation:45 } },
+      y:{ grid:{ color:'rgba(26,92,40,.07)', drawBorder:false }, ticks:{ color:'#7a9b7f', font:{size:9.5}, callback:v=>`${yPrefix}${v}` },
+          ...(yMin!=null?{min:yMin}:{}), ...(yMax!=null?{max:yMax}:{}) }
+    }
+  };
+}
+function lightOpts(yPrefix='$', showLegend=false, yMin=null, yMax=null) {
+  return {
+    responsive:true, maintainAspectRatio:false,
+    interaction:{ mode:'index', intersect:false },
+    plugins:{
+      legend:{ display:showLegend, labels:{ font:{size:10}, boxWidth:10, padding:12 }},
+      tooltip:{ backgroundColor:'rgba(244,241,235,.97)', titleColor:'#1e1e1a', bodyColor:'#7a7468', borderColor:'#d9d3c7', borderWidth:1, padding:10, cornerRadius:5 }
+    },
+    scales:{
+      x:{ grid:{ color:'rgba(0,0,0,.04)' }, ticks:{ font:{size:9.5}, maxRotation:45 } },
+      y:{ grid:{ color:'rgba(0,0,0,.05)' }, ticks:{ font:{size:9.5}, callback:v=>`${yPrefix}${v}` },
+          ...(yMin!=null?{min:yMin}:{}), ...(yMax!=null?{max:yMax}:{}) }
+    }
+  };
+}
+
+function sigClass(s) {
+  return {BUY:'b-buy',WATCH:'b-watch',MONITOR:'b-mon',AVOID:'b-avoid'}[s]||'b-mon';
+}
+function sigBanner(s) {
+  return {BUY:'sb-buy',WATCH:'sb-watch',MONITOR:'sb-monitor',AVOID:'sb-avoid'}[s]||'sb-monitor';
+}
+function sigColor(s) {
+  return {BUY:'#1a5c28',WATCH:'#e65100',MONITOR:'#607d8b',AVOID:'#c62828'}[s]||'#607d8b';
+}
+function barColor(s) {
+  return {BUY:'rgba(26,92,40,.75)',WATCH:'rgba(230,74,25,.6)',MONITOR:'rgba(69,90,100,.5)',AVOID:'rgba(198,40,40,.7)'}[s];
+}
+
+// ── Parameters ───────────────────────────────────────────────────────────────
+function getParams() {
+  return {
+    scenario:      $('p-scenario').value,
+    horizon:       parseInt($('p-horizon').value),
+    window:        parseInt($('p-window').value),
+    model_type:    $('p-model').value,
+    buy_thr:       parseFloat($('p-buy').value),
+    avoid_thr:     parseFloat($('p-avoid').value),
+    annual_vol:    parseFloat($('p-annual').value),
+    order_size:    parseFloat($('p-order').value),
+    mad_rate:      parseFloat($('p-mad').value),
+    freight_mult:  parseFloat($('p-fmult').value),
+    petcoke_disc:  parseFloat($('p-disc').value),
+    sulphur_adj:   parseFloat($('p-sulph').value),
+    n_sim:         parseInt($('p-nsim').value),
+    mc_seed:       parseInt($('p-seed').value),
+    use_live:      true,
+  };
+}
+
+const PRESETS = {
+  standard:     { scenario:'base',   horizon:6,  window:240, model_type:'ols_multi', buy_thr:-3,  avoid_thr:3,  annual_vol:180000, order_size:10000,  mad_rate:9.94, freight_mult:1.0,  petcoke_disc:0, sulphur_adj:0,  n_sim:1200, mc_seed:7 },
+  conservative: { scenario:'bear',   horizon:6,  window:18, model_type:'ols_multi', buy_thr:-5,  avoid_thr:5,  annual_vol:180000, order_size:10000,  mad_rate:9.94, freight_mult:1.1,  petcoke_disc:2, sulphur_adj:0,  n_sim:1200, mc_seed:7 },
+  aggressive:   { scenario:'bull',   horizon:9,  window:12, model_type:'ols_multi', buy_thr:-2,  avoid_thr:2,  annual_vol:180000, order_size:20000,  mad_rate:9.94, freight_mult:0.9,  petcoke_disc:0, sulphur_adj:-2, n_sim:1200, mc_seed:7 },
+  crisis:       { scenario:'crisis', horizon:12, window:18, model_type:'ols_multi',  buy_thr:-8,  avoid_thr:8,  annual_vol:180000, order_size:5000,   mad_rate:10.2, freight_mult:1.5,  petcoke_disc:5, sulphur_adj:3,  n_sim:2000, mc_seed:42 },
+  shortterm:    { scenario:'base',   horizon:3,  window:6,  model_type:'ols_multi', buy_thr:-2,  avoid_thr:3,  annual_vol:180000, order_size:15000,  mad_rate:9.94, freight_mult:1.0,  petcoke_disc:0, sulphur_adj:0,  n_sim:800,  mc_seed:7 },
+  research:     { scenario:'base',   horizon:12, window:240, model_type:'ols_multi',  buy_thr:-4,  avoid_thr:4,  annual_vol:180000, order_size:10000,  mad_rate:9.94, freight_mult:1.0,  petcoke_disc:0, sulphur_adj:0,  n_sim:2000, mc_seed:99 },
+};
+
+function applyPreset(name, el) {
+  document.querySelectorAll('.preset-chip').forEach(b=>b.classList.remove('active'));
+  if(el) el.classList.add('active');
+  const p = PRESETS[name]; if(!p) return;
+  $('p-scenario').value = p.scenario;
+  $('p-horizon').value  = p.horizon;
+  $('p-window').value   = p.window;
+  $('p-model').value    = p.model_type;
+  $('p-buy').value      = p.buy_thr;
+  $('p-avoid').value    = p.avoid_thr;
+  $('p-annual').value   = p.annual_vol;
+  $('p-order').value    = p.order_size;
+  $('p-mad').value      = p.mad_rate;
+  $('p-fmult').value    = p.freight_mult;
+  $('p-disc').value     = p.petcoke_disc;
+  $('p-sulph').value    = p.sulphur_adj;
+  $('p-nsim').value     = p.n_sim;
+  $('p-seed').value     = p.mc_seed;
+  // Update labels
+  $('lbl-sc').textContent    = $('p-scenario').options[$('p-scenario').selectedIndex].text.split('—')[0].trim();
+  $('lbl-hz').textContent    = p.horizon + ' months';
+  $('lbl-win').textContent   = p.window  + ' months';
+  $('lbl-buy').textContent   = p.buy_thr.toFixed(1) + '%';
+  $('lbl-avoid').textContent = '+' + p.avoid_thr.toFixed(1) + '%';
+  $('lbl-fmult').textContent = p.freight_mult.toFixed(2) + '×';
+  $('lbl-disc').textContent  = (p.petcoke_disc>0?'+':'')+p.petcoke_disc+'$/t';
+  $('lbl-sulph').textContent = (p.sulphur_adj>0?'+':'')+p.sulphur_adj.toFixed(1)+'$/t';
+  $('lbl-nsim').textContent  = p.n_sim;
+  $('lbl-seed').textContent  = p.mc_seed;
+  $('lbl-mdl').textContent   = p.model_type === 'ols_multi' ? 'OLS Multi' : 'OLS Simple';
+  runForecast();
+}
+function updateScenarioLabel() {
+  const sel = $('p-scenario');
+  $('lbl-sc').textContent = sel.options[sel.selectedIndex].text.split('—')[0].trim();
+}
+
+// ── API calls ─────────────────────────────────────────────────────────────────
+async function fetchLive() {
+  try {
+    const res  = await fetch('/api/live');
+    const data = await res.json();
+    updateTicker(data);
+  } catch(e) { console.warn('Live fetch failed:', e) }
+}
+
+function updateTicker(data) {
+  const b = data.brent.value, g = data.nat_gas.value;
+  const prevB = PREV_LIVE.brent || b;
+  const live  = $('sb-petcoke').textContent !== '—';
+  // Sidebar
+  $('sb-brent').textContent   = '$' + b;
+  $('sb-gas').textContent     = '$' + g;
+  // Ticker
+  const bChg = LAST_BRENT ? ((b - LAST_BRENT)/LAST_BRENT*100).toFixed(2) : null;
+  ['tk-brent','tk-brent2'].forEach(id=>{ $(id).textContent = '$'+b+'/bbl' });
+  ['tk-gas','tk-gas2'].forEach(id=>{ $(id).textContent = '$'+g });
+  if(bChg !== null) {
+    const cls  = bChg >= 0 ? 'tk-up' : 'tk-dn';
+    const sign = bChg >= 0 ? '▲' : '▼';
+    ['tk-brent-chg','tk-brent-chg'].forEach((id,i)=>{
+      const el = i===0?$('tk-brent-chg'):null; if(!el)return;
+      el.textContent = sign + Math.abs(bChg) + '%'; el.className = 'tk-chg ' + cls;
+    });
+  }
+  const madRate = parseFloat($('p-mad').value)||9.94;
+  ['tk-mad','tk-mad2'].forEach(id=>{ $(id).textContent = madRate });
+  // Live dot
+  $('live-dot').className = 'live-dot' + (data.brent.live ? '' : ' stale');
+  $('live-label').textContent = data.brent.live ? 'LIVE' : 'CACHED';
+  $('ts-label').textContent   = (data.ts||'').replace('T',' ').replace('Z',' UTC');
+  LAST_BRENT = b;
+  PREV_LIVE  = { brent: b, gas: g };
+}
+
+async function runForecast() {
+  const btn = $('run-btn');
+  btn.disabled = true; btn.textContent = 'RUNNING...';
+  toast('Computing forecast...');
+  try {
+    const res  = await fetch('/api/forecast', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify(getParams())
+    });
+    DATA = await res.json();
+    renderAll();
+    await loadModelCompare();
+  } catch(e) {
+    alert('Server error: ' + e.message);
+  }
+  btn.disabled = false; btn.textContent = 'RUN FORECAST';
+  toast('', false);
+}
+
+async function loadModelCompare() {
+  try {
+    const res = await fetch('/api/model_compare', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({})
+    });
+    const d = await res.json();
+    renderModelCompare(d);
+    $('sb-model-compare').style.display = 'block';
+  } catch(e) {}
+}
+
+// ── RENDER ALL ────────────────────────────────────────────────────────────────
+function renderAll() {
+  if(!DATA) return;
+  updateLivePrices();
+  updateSignalBanner();
+  renderKPIs();
+  renderMainChart();
+  renderScatterChart();
+  renderRatioChart(DATA.history, 'chart-ratio');
+  renderInsights();
+  renderModelStats();
+  renderResidChart();
+  renderMCChart();
+  renderForecastTable();
+  renderAR1Chart();
+  renderRatioChart(DATA.history, 'chart-ratio2');
+  renderScenarioStrip();
+  renderScenariosChart();
+  renderScCostChart();
+  renderScMatrix();
+  renderScTable();
+  renderProcurement();
+  renderSensitivity();
+  renderWindowChart();
+  renderPurchaseWindowStrip();
+  renderSupplyRisk();
+  renderDiagnostics();
+  $('fnote-seed').textContent = DATA.params.mc_seed;
+  $('fnote-nsim').textContent = DATA.params.n_sim;
+}
+
+function updateLivePrices() {
+  const L = DATA.live;
+  $('sb-brent').textContent   = '$' + L.brent;
+  $('sb-petcoke').textContent = '$' + L.petcoke;
+  $('sb-gas').textContent     = '$' + L.gas;
+  $('sb-freight').textContent = '$' + L.freight;
+  ['tk-brent','tk-brent2'].forEach(id=>$(id).textContent = '$'+L.brent+'/bbl');
+  ['tk-petcoke','tk-petcoke2'].forEach(id=>$(id).textContent = '$'+L.petcoke+'/t');
+  ['tk-landed','tk-landed2'].forEach(id=>$(id).textContent  = '$'+L.landed+'/t');
+  ['tk-mad','tk-mad2'].forEach(id=>$(id).textContent = L.mad_rate);
+  $('live-dot').className = 'live-dot' + (L.is_live ? '' : ' stale');
+  $('live-label').textContent = L.is_live ? 'LIVE' : 'CACHED';
+  if(L.ts) $('ts-label').textContent = L.ts.replace('T',' ').replace('Z',' UTC');
+}
+
+function updateSignalBanner() {
+  const fc  = DATA.forecast;
+  const buy = DATA.buy_months;
+  const sig = buy.length > 0 ? 'BUY' : (fc.some(f=>f.signal==='WATCH') ? 'WATCH' : 'MONITOR');
+  const best= DATA.best_month;
+  const banner = $('main-signal-banner');
+  banner.className = 'signal-banner ' + sigBanner(sig);
+  $('sig-dot').style.background = sigColor(sig);
+  $('sig-txt').textContent = sig === 'BUY' ? `BUY — ${best.label} at $${best.point}/t`
+    : sig === 'WATCH' ? `WATCH — Optimal: ${best.label}`
+    : `MONITOR — No clear opportunity`;
+}
+
+// ── KPIs ──────────────────────────────────────────────────────────────────────
+function renderKPIs() {
+  const L = DATA.live, M = DATA.model, fc = DATA.forecast;
+  const best = DATA.best_month;
+  const pct  = fc[0].pct_vs_now;
+  const kpis = [
+    { lbl:'Petcoke Spot',   val:'$'+L.petcoke, unit:'/t · regression est.',
+      delta: pct,         bar:0.72,  barColor:'#43a047' },
+    { lbl:'Brent Crude',    val:'$'+L.brent,   unit:'/bbl · ' + (L.is_live?'live':'cached'),
+      delta:null,         bar:0.68,  barColor:'#66bb6a' },
+    { lbl:'Total Landed',   val:'$'+L.landed,  unit:'/t · petcoke + freight',
+      delta:null,         bar:0.75,  barColor:'#2e7d32' },
+    { lbl:'Best Buy Month', val:best.label,    unit:'at $'+best.point+'/t',
+      delta:best.pct_vs_now, bar:Math.abs(best.pct_vs_now)/10, barColor:'#a5d6a7' },
+  ];
+  $('kpi-row').innerHTML = kpis.map(k=>{
+    const delta = k.delta != null ? `<div class="kpi-delta ${k.delta<0?'kd-dn':k.delta>0?'kd-up':'kd-flat'}">${k.delta<0?'':k.delta>0?'+':''}${k.delta!=null?k.delta.toFixed(1)+'%':''}</div>` : '';
+    return `<div class="kpi">
+      <div class="kpi-lbl">${k.lbl}</div>
+      <div class="kpi-val">${k.val}</div>
+      <div class="kpi-sub">${k.unit}</div>
+      ${delta}
+      <div class="kpi-rule" style="width:${Math.min(100,k.bar*100).toFixed(0)}%;opacity:.5;background:${k.barColor}"></div>
+    </div>`;
+  }).join('');
+}
+
+// ── MAIN CHART ────────────────────────────────────────────────────────────────
+function renderMainChart() {
+  const hist = DATA.history, fc = DATA.forecast;
+  const hLabels = hist.map(d=>d.month.slice(0,7));
+  const fLabels = fc.map(d=>d.label);
+  const labels  = [...hLabels, ...fLabels];
+  const len_h   = hist.length;
+
+  const hist_y   = [...hist.map(d=>d.petcoke), ...Array(fc.length).fill(null)];
+  const fc_y     = [...Array(len_h-1).fill(null), hist[len_h-1].petcoke, ...fc.map(d=>d.point)];
+  const p90_y    = [...Array(len_h).fill(null),  ...fc.map(d=>d.p90)];
+  const p75_y    = [...Array(len_h).fill(null),  ...fc.map(d=>d.p75)];
+  const p25_y    = [...Array(len_h).fill(null),  ...fc.map(d=>d.p25)];
+  const p10_y    = [...Array(len_h).fill(null),  ...fc.map(d=>d.p10)];
+
+  mkChart('chart-main',{
+    type:'line',
+    data:{ labels, datasets:[
+      { label:'P90', data:p90_y, borderColor:'transparent', backgroundColor:'rgba(46,125,50,.06)', fill:'+3', pointRadius:0, tension:.3, spanGaps:false },
+      { label:'P75', data:p75_y, borderColor:'transparent', backgroundColor:'rgba(46,125,50,.12)', fill:'+1', pointRadius:0, tension:.3, spanGaps:false },
+      { label:'P25', data:p25_y, borderColor:'transparent', backgroundColor:'rgba(46,125,50,.12)', fill:false, pointRadius:0, tension:.3, spanGaps:false },
+      { label:'P10', data:p10_y, borderColor:'transparent', backgroundColor:'rgba(46,125,50,.06)', fill:false, pointRadius:0, tension:.3, spanGaps:false },
+      { label:'Historical', data:hist_y, borderColor:'rgba(26,92,40,.9)', borderWidth:2, pointRadius:2.5, pointBackgroundColor:'rgba(255,255,255,1)', pointBorderColor:'rgba(26,92,40,.7)', pointBorderWidth:1.5, fill:false, tension:.3, spanGaps:false },
+      { label:'Forecast',   data:fc_y,   borderColor:'rgba(67,160,71,.7)', borderWidth:1.5, borderDash:[5,4], pointRadius:3, pointBackgroundColor:'rgba(255,255,255,1)', pointBorderColor:'rgba(67,160,71,.6)', fill:false, tension:.3, spanGaps:false },
+    ]},
+    options:{ ...baseOpts('$',false,null,null),
+      plugins:{
+        ...baseOpts().plugins,
+        legend:{ display:true, labels:{ font:{size:9}, boxWidth:8, padding:10, color:'rgba(255,255,255,.3)',
+          filter:(item)=>['Historical','Forecast'].includes(item.text) }},
+        annotation:{
+          annotations:{ divider:{
+            type:'line', xMin: len_h-1, xMax: len_h-1,
+            borderColor:'rgba(255,255,255,.12)', borderWidth:1, borderDash:[3,3],
+            label:{ display:true, content:'NOW', position:'start', color:'rgba(255,255,255,.3)', font:{size:9,family:'IBM Plex Mono'}, backgroundColor:'transparent', padding:2 }
+          }}
+        }
+      }
+    }
+  });
+}
+
+// ── SCATTER ───────────────────────────────────────────────────────────────────
+function renderScatterChart() {
+  const hist = DATA.history, m = DATA.model;
+  const pts  = hist.map(d=>({ x:d.coal, y:d.petcoke }));
+  const xs   = [Math.min(...hist.map(d=>d.coal))-5, Math.max(...hist.map(d=>d.coal))+5];
+  mkChart('chart-scatter',{
+    type:'scatter',
+    data:{ datasets:[
+      { label:'Data', data:pts, backgroundColor:'rgba(46,125,50,.45)', pointRadius:5, pointHoverRadius:7 },
+      { label:'OLS', type:'line', data:xs.map(x=>({x,y:(m.scatter_alpha||m.alpha)+(m.scatter_beta||m.beta)*x})), borderColor:'rgba(26,92,40,.6)', borderWidth:1.5, pointRadius:0, fill:false },
+    ]},
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{display:false}, tooltip:{ backgroundColor:'rgba(13,13,11,.92)', bodyColor:'rgba(244,241,235,.6)', borderColor:'#333', borderWidth:1, padding:9,
+        callbacks:{ label:c=>`Coal $${c.parsed.x}/t → Petcoke $${c.parsed.y}/t` } }},
+      scales:{
+        x:{ grid:{color:'rgba(255,255,255,.03)'}, ticks:{color:'#555',font:{size:9}}, title:{display:true,text:'API2 Coal ($/t)',color:'#555',font:{size:9}} },
+        y:{ grid:{color:'rgba(255,255,255,.04)'}, ticks:{color:'#555',font:{size:9},callback:v=>`$${v}`}, title:{display:true,text:'Petcoke ($/t)',color:'#555',font:{size:9}} }
+      }
+    }
+  });
+  $('diag-r2').textContent   = (DATA.model.r2*100).toFixed(1)+'%';
+  $('diag-beta').textContent = DATA.model.beta;
+}
+
+// ── RATIO CHART ───────────────────────────────────────────────────────────────
+function renderRatioChart(hist, chartId) {
+  const ratios = hist.map(d=>d.petcoke/d.brent);
+  const mean   = ratios.reduce((a,b)=>a+b,0)/ratios.length;
+  const std    = Math.sqrt(ratios.reduce((a,b)=>a+(b-mean)**2,0)/ratios.length);
+  mkChart(chartId,{
+    type:'line',
+    data:{ labels:hist.map(d=>d.month.slice(0,7)), datasets:[
+      { label:'Ratio', data:ratios.map(v=>parseFloat(v.toFixed(4))), borderColor:'rgba(26,92,40,.75)', borderWidth:1.5, pointRadius:2, fill:false, tension:.3 },
+      { label:'Mean', data:Array(ratios.length).fill(parseFloat(mean.toFixed(4))), borderColor:'rgba(255,255,255,.15)', borderWidth:1, borderDash:[4,3], pointRadius:0 },
+      { label:'+1σ',  data:Array(ratios.length).fill(parseFloat((mean+std).toFixed(4))), borderColor:'rgba(160,41,26,.25)', borderWidth:1, borderDash:[3,3], pointRadius:0 },
+      { label:'−1σ',  data:Array(ratios.length).fill(parseFloat((mean-std).toFixed(4))), borderColor:'rgba(26,107,60,.25)', borderWidth:1, borderDash:[3,3], pointRadius:0 },
+    ]},
+    options:{ ...baseOpts('',false), scales:{ ...baseOpts().scales, y:{ ...baseOpts().scales.y, ticks:{color:'#555',font:{size:9}} } } }
+  });
+}
+
+// ── INSIGHT CARDS ─────────────────────────────────────────────────────────────
+function renderInsights() {
+  const L = DATA.live, fc = DATA.forecast, best = DATA.best_month;
+  const r2pct = (DATA.model.r2*100).toFixed(1);
+  const spread6 = (fc[fc.length-1].p90 - fc[fc.length-1].p10).toFixed(1);
+  const fwd6  = fc[fc.length-1].point;
+  const pct6  = ((fwd6-L.petcoke)/L.petcoke*100).toFixed(1);
+
+  const items = [
+    { lbl:'6-Month Price Trend', val:`${parseFloat(pct6)>0?'+':''}${pct6}%`, detail:`$${L.petcoke} → $${fwd6}/t`, accent:'var(--brand)' },
+    { lbl:'Optimal Buy Window',  val:best.label, detail:`$${best.point}/t · ${best.pct_vs_now.toFixed(1)}% vs now`, accent:'var(--brand3)' },
+    
+  ];
+  $('insight-row').innerHTML = items.map(i=>`
+    <div class="card cp-sm" style="border-left:3px solid ${i.accent}">
+      <div style="font-family:var(--font-mono);font-size:9px;text-transform:uppercase;letter-spacing:.1em;color:var(--ghost);margin-bottom:6px">${i.lbl}</div>
+      <div style="font-family:var(--font-serif);font-size:24px;font-weight:300;color:var(--ink);line-height:1;margin-bottom:4px">${i.val}</div>
+      <div style="font-size:11px;color:var(--muted)">${i.detail}</div>
+    </div>`).join('');
+}
+
+// ── MODEL STATS ───────────────────────────────────────────────────────────────
+function renderModelStats() {
+  const m = DATA.model;
+  const eq = m.type === 'cnn_temporal'
+    ? `CNN Temporal: OLS(coal,brent,gas) + MLP(64→32) residual correction  [n_weekly=${(m.n_train||1044).toLocaleString()}, lookback=8wk]`
+    : m.type === 'ols_multi'
+      ? `Petcoke = ${m.coeffs[0].toFixed(2)} + ${m.coeffs[1].toFixed(3)}·Brent + ${m.coeffs[2].toFixed(3)}·Gas + ${m.coeffs[3].toFixed(3)}·Coal (n=${m.n})`
+      : `Petcoke = ${m.alpha.toFixed(2)} + ${m.beta.toFixed(3)}·Coal  (n=${m.n})`;
+  $('model-eq').textContent = eq;
+
+  const stats = [
+    { v:(m.r2*100).toFixed(1)+'%',         l:'R² (in-sample)' },
+    { v:'$'+m.mae.toFixed(2),              l:'MAE ($/t)' },
+    { v:'$'+m.rmse.toFixed(2),             l:'RMSE ($/t)' },
+    { v:(m.dir_acc||55).toFixed(0)+'%',    l:'Dir. Accuracy' },
+    { v:'$'+m.std_err.toFixed(2),          l:'Residual Std' },
+    { v:(m.n_train||m.n).toLocaleString(), l:'Obs. (weekly)' },
+  ];
+  $('model-stats-row').innerHTML = stats.map(s=>`
+    <div class="stat-box"><div class="stat-v">${s.v}</div><div class="stat-l">${s.l}</div></div>`).join('');
+
+  $('ar1-phi').textContent  = m.ar1_phi;
+  $('diag-phi').textContent = m.ar1_phi;
+  const lr = m.ar1_phi < 1 ? (DATA.live.brent * (1 - m.ar1_phi) / (1 - m.ar1_phi)).toFixed(1) : '—';
+  $('diag-lr-mean').textContent = '$' + DATA.live.brent;
+}
+
+// ── RESIDUAL CHART ────────────────────────────────────────────────────────────
+function renderResidChart() {
+  const resids = DATA.model.residuals;
+  const labels = DATA.history.map(d=>d.month.slice(0,7));
+  mkChart('chart-resid',{
+    type:'bar',
+    data:{ labels, datasets:[{
+      label:'Residual', data:resids.map(r=>parseFloat(r.toFixed(2))),
+      backgroundColor:resids.map(r=>r>=0?'rgba(46,125,50,.5)':'rgba(198,40,40,.45)'),
+      borderRadius:2,
+    }]},
+    options:{ ...lightOpts('$'),
+      scales:{ x:{grid:{display:false},ticks:{font:{size:9},maxRotation:45}},
+        y:{grid:{color:'rgba(0,0,0,.05)'},ticks:{font:{size:9},callback:v=>`$${v}`},title:{display:true,text:'Residual ($/t)',font:{size:9}}} }
+    }
+  });
+  // Copy to diagnostics
+  setTimeout(()=>{
+    const h = DATA.history, m = DATA.model;
+    mkChart('chart-diag-resid',{
+      type:'scatter',
+      data:{ datasets:[{ label:'Resid vs Predicted', data:m.predictions.map((p,i)=>({x:parseFloat(p.toFixed(2)),y:parseFloat(m.residuals[i].toFixed(2))})),
+        backgroundColor:'rgba(46,125,50,.4)', pointRadius:5 }]},
+      options:{ ...lightOpts(), scales:{
+        x:{grid:{color:'rgba(0,0,0,.04)'},ticks:{font:{size:9}},title:{display:true,text:'Fitted ($/t)',font:{size:9}}},
+        y:{grid:{color:'rgba(0,0,0,.04)'},ticks:{font:{size:9},callback:v=>`$${v}`},title:{display:true,text:'Residual',font:{size:9}}},
+      }}
+    });
+    mkChart('chart-diag-scatter',{
+      type:'scatter',
+      data:{ datasets:[
+        { label:'Data', data:h.map(d=>({x:d.brent,y:d.petcoke})), backgroundColor:'rgba(46,125,50,.4)', pointRadius:4.5 },
+        { type:'line', label:'OLS', data:[Math.min(...h.map(d=>d.brent)),Math.max(...h.map(d=>d.brent))].map(x=>({x,y:m.alpha+m.beta*x})), borderColor:'rgba(26,92,40,.6)', borderWidth:1.5, pointRadius:0 },
+      ]},
+      options:{ ...lightOpts(), scales:{ x:{grid:{color:'rgba(0,0,0,.04)'},ticks:{font:{size:9}},title:{display:true,text:'Brent $/bbl',font:{size:9}}}, y:{grid:{color:'rgba(0,0,0,.04)'},ticks:{font:{size:9},callback:v=>`$${v}`},title:{display:true,text:'Petcoke $/t',font:{size:9}}} } }
+    });
+  }, 50);
+}
+
+// ── MONTE CARLO CHART ─────────────────────────────────────────────────────────
+function renderMCChart() {
+  const fc = DATA.forecast;
+  const lb = fc.map(d=>d.label);
+  mkChart('chart-mc',{
+    type:'bar',
+    data:{ labels:lb, datasets:[
+      { label:'P05–P95', data:fc.map(d=>d.p95-d.p05), base:fc.map(d=>d.p05), backgroundColor:'rgba(46,125,50,.09)', borderRadius:4, borderSkipped:false },
+      { label:'P25–P75', data:fc.map(d=>d.p75-d.p25), base:fc.map(d=>d.p25), backgroundColor:'rgba(46,125,50,.18)', borderRadius:3, borderSkipped:false },
+      { label:'Point',   data:fc.map(d=>d.point), type:'line', borderColor:'rgba(26,92,40,.9)', borderWidth:2.5, pointRadius:5, pointBackgroundColor:'rgba(255,255,255,1)', pointBorderColor:'rgba(26,92,40,.7)', fill:false },
+    ]},
+    options:{ ...lightOpts('$',false), plugins:{ ...lightOpts().plugins, tooltip:{ ...lightOpts().plugins.tooltip, callbacks:{ label:c=>c.dataset.label==='Point'?` P50: $${c.parsed.y.toFixed(2)}/t`:null } } } }
+  });
+}
+
+// ── FORECAST TABLE ────────────────────────────────────────────────────────────
+function renderForecastTable() {
+  const fc = DATA.forecast;
+  $('fc-tbody').innerHTML = fc.map(row=>`
+    <tr>
+      <td style="font-weight:600;color:var(--ink)">${row.label}</td>
+      <td class="tm">$${row.brent_fwd}</td>
+      <td class="tv">$${row.point}</td>
+      <td class="tf">$${row.p10}</td>
+      <td class="tf">$${row.p25}</td>
+      <td class="tf">$${row.p75}</td>
+      <td class="tf">$${row.p90}</td>
+      <td class="tm">$${row.freight}</td>
+      <td class="tm">$${row.landed}</td>
+      <td class="${row.pct_vs_now<0?'tg':'tr'}">${row.pct_vs_now>0?'+':''}${row.pct_vs_now.toFixed(1)}%</td>
+      <td><span class="badge ${sigClass(row.signal)}"><span class="bd"></span>${row.signal}</span></td>
+    </tr>`).join('');
+}
+
+// ── AR(1) CHART ───────────────────────────────────────────────────────────────
+function renderAR1Chart() {
+  const fc = DATA.forecast, bands = DATA.coal_ar1 || DATA.brent_ar1;
+  const lb  = fc.map(d=>d.label);
+  mkChart('chart-ar1',{
+    type:'line',
+    data:{ labels:lb, datasets:[
+      { label:'P90', data:bands.p90, borderColor:'transparent', backgroundColor:'rgba(46,125,50,.07)', fill:'+3', pointRadius:0, tension:.3 },
+      { label:'P75', data:bands.p75, borderColor:'transparent', backgroundColor:'rgba(46,125,50,.12)', fill:'+1', pointRadius:0, tension:.3 },
+      { label:'P25', data:bands.p25, borderColor:'transparent', backgroundColor:'rgba(46,125,50,.12)', fill:false, pointRadius:0, tension:.3 },
+      { label:'P10', data:bands.p10, borderColor:'transparent', backgroundColor:'rgba(46,125,50,.07)', fill:false, pointRadius:0, tension:.3 },
+      { label:'P50',  data:bands.p50, borderColor:'rgba(26,92,40,.7)', borderWidth:1.5, pointRadius:3, fill:false, tension:.3 },
+      { label:'Coal scenario', data:fc.map(d=>d.coal_fwd||d.brent_fwd), borderColor:'rgba(184,134,42,.6)', borderWidth:1.5, borderDash:[4,3], pointRadius:2, fill:false, tension:.3 },
+    ]},
+    options:{ ...lightOpts('$',true), plugins:{ ...lightOpts().plugins, legend:{ display:true, labels:{ font:{size:9}, boxWidth:8, padding:8, filter:i=>['P50','Scenario'].includes(i.text) } } } }
+  });
+  mkChart('chart-diag-ar1',{
+    type:'line',
+    data:{ labels:lb, datasets:[
+      { label:'P90', data:bands.p90, borderColor:'transparent', backgroundColor:'rgba(46,125,50,.1)', fill:'+1', pointRadius:0 },
+      { label:'P10', data:bands.p10, borderColor:'transparent', backgroundColor:'rgba(46,125,50,.1)', fill:false, pointRadius:0 },
+      { label:'Median', data:bands.p50, borderColor:'rgba(26,92,40,.7)', borderWidth:2, pointRadius:3, fill:false },
+    ]},
+    options:{ ...lightOpts('$',false) }
+  });
+}
+
+// ── SCENARIO STRIP ────────────────────────────────────────────────────────────
+function renderScenarioStrip() {
+  const sc = DATA.scenarios, cur = DATA.params.scenario;
+  const sc_meta = {
+    bear:'OPEC+ unwind',base:'Moderate',bull:'Supply cut',
+    contango:'Contango',backwd:'Backwardation',crisis:'Geo shock',crash:'Demand collapse'
+  };
+  const allSc = Object.keys(sc);
+  $('sc-strip').innerHTML = allSc.map(k=>{
+    const months = sc[k];
+    const avg = (months.reduce((a,b)=>a+b.point,0)/months.length).toFixed(1);
+    const pct = months[0].pct.toFixed(1);
+    const color = k==='base' ? '#1a5c28' : k==='crash'||k==='bear' ? '#388e3c' : k==='crisis' ? '#c62828' : '#43a047';
+    return `<div class="sc-card ${k===cur?'active':''}" onclick="switchScenario('${k}')">
+      <div class="sc-name">${k.toUpperCase()}</div>
+      <div class="sc-price" style="color:${color}">$${avg}</div>
+      <div class="sc-pct" style="color:${parseFloat(pct)<0?'#4ade80':'#f87171'}">${parseFloat(pct)>0?'+':''}${pct}%</div>
+    </div>`;
+  }).join('');
+}
+
+function switchScenario(sc) {
+  $('p-scenario').value = sc;
+  $('lbl-sc').textContent = sc.charAt(0).toUpperCase()+sc.slice(1);
+  document.querySelectorAll('.preset-chip').forEach(b=>b.classList.remove('active'));
+  runForecast();
+}
+
+// ── SCENARIOS CHART ───────────────────────────────────────────────────────────
+function renderScenariosChart() {
+  const sc = DATA.scenarios, cur = DATA.params.scenario;
+  const colors   = { bear:'#66bb6a',base:'#1a5c28',bull:'#ef5350',contango:'#1976d2',backwd:'#7b1fa2',crisis:'#e64a19',crash:'#ad1457' };
+  const dashes   = { base:[],bear:[5,3],bull:[4,2],contango:[2,3],backwd:[7,3],crisis:[2,2],crash:[5,2,2,2] };
+  const labels   = Object.values(sc)[0].map(d=>d.label);
+  mkChart('chart-scenarios',{
+    type:'line',
+    data:{ labels, datasets:Object.entries(sc).map(([k,months])=>({
+      label:k.toUpperCase(), data:months.map(m=>m.point),
+      borderColor:colors[k]||'#999', borderWidth:k===cur?2.5:1,
+      borderDash:dashes[k]||[], pointRadius:k===cur?4:2,
+      pointBackgroundColor:'rgba(13,13,11,1)', fill:false, tension:.3,
+    }))},
+    options:{ ...baseOpts('$',true), plugins:{ ...baseOpts().plugins, legend:{ display:true, labels:{ font:{size:9}, boxWidth:8, padding:10, color:'var(--muted)' } } } }
+  });
+}
+
+function renderScCostChart() {
+  const sc = DATA.scenarios;
+  const ann = DATA.params.annual_vol || 180000, mad = DATA.params.mad_rate||9.94;
+  const fr  = DATA.live.freight;
+  const labels = Object.values(sc)[0].map(d=>d.label);
+  const colors2 = { bear:'rgba(102,187,106,.65)',base:'rgba(26,92,40,.65)',bull:'rgba(239,83,80,.65)',contango:'rgba(25,118,210,.6)',backwd:'rgba(123,31,162,.55)',crisis:'rgba(230,74,25,.65)',crash:'rgba(173,20,87,.6)' };
+  $('sc-vol-lbl').textContent = ann.toLocaleString();
+  $('sc-mad-lbl').textContent = mad;
+  mkChart('chart-sc-cost',{
+    type:'bar',
+    data:{ labels, datasets:Object.entries(sc).map(([k,months])=>({
+      label:k.toUpperCase(), data:months.map(m=>parseFloat(((m.point+fr)*ann*mad/1e6/months.length).toFixed(2))),
+      backgroundColor:colors2[k], borderRadius:3,
+    }))},
+    options:{ ...baseOpts('',true), scales:{ ...baseOpts().scales, y:{...baseOpts().scales.y, ticks:{color:'#555',font:{size:9},callback:v=>v+'M'}, title:{display:true,text:'MAD M/month',color:'#555',font:{size:9}} } } }
+  });
+}
+
+function renderScMatrix() {
+  const sc = DATA.scenarios, cur_petcoke = DATA.live.petcoke, buy_thr = DATA.params.buy_thr||DATA.params.buy_threshold||-3;
+  const allSc = Object.keys(sc);
+  $('sc-matrix').innerHTML = allSc.map(k=>{
+    const months = sc[k];
+    const buy = months.find(m=>m.pct <= buy_thr);
+    const best = months.reduce((a,b)=>a.point<b.point?a:b);
+    return `<div style="display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid var(--warm)">
+      <span style="font-family:var(--font-mono);font-size:10px;font-weight:600;color:var(--ink);text-transform:uppercase">${k}</span>
+      <span style="font-size:11px;color:var(--muted)">${buy?buy.label+' at $'+buy.point+'/t':'No clear buy'}</span>
+      <span class="badge ${sigClass(buy?'BUY':'MONITOR')}"><span class="bd"></span>${buy?'BUY':'MONITOR'}</span>
+    </div>`;
+  }).join('');
+}
+
+function renderScTable() {
+  const sc = DATA.scenarios, ann = DATA.params.annual_vol||180000, mad = DATA.params.mad_rate||9.94, fr = DATA.live.freight;
+  const baseSc = sc['base'];
+  const baseAvg = baseSc.reduce((a,b)=>a+b.point,0)/baseSc.length;
+  const sc_descriptions = { bear:'OPEC+ unwind',base:'Moderate growth',bull:'Supply cuts',contango:'Steep contango',backwd:'Backwardation',crisis:'Geo-political shock',crash:'Demand collapse' };
+  $('sc-tbody').innerHTML = Object.entries(sc).map(([k,months])=>{
+    const avg  = months.reduce((a,b)=>a+b.point,0)/months.length;
+    const min  = Math.min(...months.map(m=>m.point));
+    const max  = Math.max(...months.map(m=>m.point));
+    const avgL = months.reduce((a,b)=>a+b.landed,0)/months.length;
+    const annM = (avgL * ann * mad / 1e6).toFixed(1);
+    const best = months.reduce((a,b)=>a.point<b.point?a:b);
+    const vb   = ((avg - baseAvg)/baseAvg*100).toFixed(1);
+    return `<tr>
+      <td style="font-weight:700;font-family:var(--font-mono);font-size:10px;text-transform:uppercase">${k}</td>
+      <td style="font-size:11px;color:var(--ghost)">${sc_descriptions[k]||k}</td>
+      <td class="tv">$${avg.toFixed(1)}</td>
+      <td class="tf">$${min.toFixed(1)}</td>
+      <td class="tf">$${max.toFixed(1)}</td>
+      <td class="tm">$${avgL.toFixed(1)}</td>
+      <td style="font-family:var(--font-mono);font-size:12px;color:var(--ink)">MAD ${annM}M</td>
+      <td class="${parseFloat(vb)<0?'tg':'tr'}">${parseFloat(vb)>0?'+':''}${vb}%</td>
+      <td style="font-family:var(--font-mono);font-size:10px;color:var(--blue)">${best.label}</td>
+    </tr>`;
+  }).join('');
+}
+
+// ── PROCUREMENT ───────────────────────────────────────────────────────────────
+function renderProcurement() {
+  const proc = DATA.procurement, order = DATA.params.order_size||10000;
+  $('pc-order-lbl').textContent = order.toLocaleString();
+  $('proc-cards').innerHTML = proc.map((p,i)=>{
+    const isRec = i===1, isHedge = i===2;
+    const saveClass = p.saving_usd>100?'mv-save':p.saving_usd<-100?'mv-cost':'';
+    return `<div class="proc-card ${isRec?'rec':''}">
+      <div class="pc-head">
+        <div class="pc-lbl">${p.label}</div>
+        ${isRec?'<span class="pc-tag pc-tag-rec">RECOMMENDED</span>':isHedge?'<span class="pc-tag pc-tag-hed">HEDGED</span>':''}
+      </div>
+      <div style="font-size:10.5px;color:var(--ghost);margin-bottom:7px">${p.note}</div>
+      <div class="pc-row">
+        <div class="pc-m"><div class="ml">Unit</div><div class="mv">$${p.price.toFixed(1)}/t</div></div>
+        <div class="pc-m"><div class="ml">Total (USD)</div><div class="mv">$${Math.round(p.total_usd).toLocaleString()}</div></div>
+        <div class="pc-m"><div class="ml">Total (MAD)</div><div class="mv">MAD ${Math.round(p.total_mad).toLocaleString()}</div></div>
+        <div class="pc-m"><div class="ml">vs. Spot</div><div class="mv ${saveClass}">${p.saving_usd>100?'Save $'+Math.round(p.saving_usd).toLocaleString():p.saving_usd<-100?'Cost +$'+Math.abs(Math.round(p.saving_usd)).toLocaleString():'—'}</div></div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function renderSensitivity() {
+  const sens = DATA.sensitivity, ann = DATA.params.annual_vol||180000;
+  const max  = Math.max(...sens.map(s=>s.annual_mad_m));
+  const colors3 = ['#4ade80','rgba(74,222,128,.5)','#d4a43a','rgba(248,113,113,.5)','#f87171'];
+  $('sens-vol-lbl').textContent = (ann/1000).toFixed(0)+'k t/year';
+  $('sens-bars').innerHTML = sens.map((s,i)=>`
+    <div class="hbar">
+      <div class="hb-head">
+        <span class="hb-lbl">${s.label} · $${s.price}/t</span>
+        <span class="hb-val">MAD ${s.annual_mad_m}M</span>
+      </div>
+      <div class="hb-track"><div class="hb-fill" style="width:${(s.annual_mad_m/max*100).toFixed(0)}%;background:${colors3[i]}"></div></div>
+    </div>`).join('');
+  $('swing-val').textContent = `±MAD ${DATA.swing_per_10}M/year`;
+}
+
+function renderPurchaseWindowStrip() {
+  if(!DATA||!DATA.forecast) return;
+  const fc=DATA.forecast;
+  const sigCfg={
+    BUY:    {bg:'#e8f5e9',border:'#1a5c28',text:'#1a5c28',label:'BUY',  icon:'▼'},
+    WATCH:  {bg:'#fff3e0',border:'#e65100',text:'#e65100',label:'WATCH', icon:'◈'},
+    MONITOR:{bg:'#eceff1',border:'#607d8b',text:'#607d8b',label:'HOLD',  icon:'◎'},
+    AVOID:  {bg:'#ffebee',border:'#c62828',text:'#c62828',label:'AVOID', icon:'▲'},
+  };
+  const best=fc.reduce((a,b)=>a.point<b.point?a:b);
+  const strip=$('purchase-window-strip');
+  if(!strip) return;
+  strip.innerHTML=fc.map(m=>{
+    const cfg=sigCfg[m.signal]||sigCfg.MONITOR;
+    const isBest=m.label===best.label;
+    return `<div style="flex:1;min-width:0;background:${cfg.bg};border:${isBest?'2px':'1px'} solid ${cfg.border};
+      border-radius:7px;padding:10px 8px;text-align:center;transition:transform .15s;
+      ${isBest?'box-shadow:0 2px 8px rgba(0,0,0,.12);':''}" title="${m.label} · $${m.point}/t · ${m.signal}">
+      <div style="font-family:var(--font-mono);font-size:8px;text-transform:uppercase;letter-spacing:.1em;color:${cfg.text};margin-bottom:4px">${m.label}</div>
+      <div style="font-family:var(--font-ui);font-size:${isBest?'17':'15'}px;font-weight:700;color:var(--ink);line-height:1.1">$${m.point}</div>
+      <div style="font-family:var(--font-mono);font-size:9px;color:${m.pct_vs_now<0?'#2e7d32':'#c62828'};margin:3px 0">
+        ${m.pct_vs_now>0?'+':''}${m.pct_vs_now.toFixed(1)}%</div>
+      <div style="display:inline-flex;align-items:center;gap:3px;background:${cfg.border};color:#fff;
+        border-radius:3px;padding:2px 6px;font-family:var(--font-mono);font-size:8px;font-weight:600;letter-spacing:.04em">
+        ${cfg.icon} ${cfg.label}</div>
+      ${isBest?'<div style="font-family:var(--font-mono);font-size:8px;color:var(--brand);margin-top:4px;font-weight:600">★ OPTIMAL</div>':''}
+    </div>`;
+  }).join('');
+  const h=$('window-headline');
+  if(h){
+    const buys=fc.filter(m=>m.signal==='BUY');
+    h.textContent=buys.length>0
+      ?`Optimal entry: ${best.label} at $${best.point}/t — ${Math.abs(best.pct_vs_now).toFixed(1)}% below current price`
+      :`No clear buy signal — best available: ${best.label} at $${best.point}/t`;
+    h.style.color=buys.length>0?'var(--brand)':'var(--muted)';
+  }
+}
+
+function renderWindowChart() {
+  const fc = DATA.forecast;
+  mkChart('chart-window',{
+    type:'bar',
+    data:{ labels:fc.map(d=>d.label), datasets:[{
+      data:fc.map(d=>d.point),
+      backgroundColor:fc.map(d=>barColor(d.signal)),
+      borderRadius:5, borderSkipped:false,
+    }]},
+    options:{ ...lightOpts('$',false), plugins:{ ...lightOpts().plugins, tooltip:{ ...lightOpts().plugins.tooltip, callbacks:{ label:c=>[` $${c.parsed.y.toFixed(2)}/t`,` Signal: ${fc[c.dataIndex].signal}`] } } } }
+  });
+}
+
+function renderSupplyRisk() {
+  const origins = [
+    {name:'USA',        pct:42, risk:'MEDIUM', color:'rgba(212,164,58,.7)'},
+    {name:'Russia',     pct:28, risk:'HIGH',   color:'rgba(160,41,26,.75)'},
+    {name:'S. Arabia',  pct:18, risk:'MEDIUM', color:'rgba(212,164,58,.55)'},
+    {name:'Venezuela',  pct:8,  risk:'HIGH',   color:'rgba(160,41,26,.55)'},
+    {name:'Other',      pct:4,  risk:'LOW',    color:'rgba(26,107,60,.6)'},
+  ];
+  const riskBadge = { HIGH:'b-avoid', MEDIUM:'b-watch', LOW:'b-buy' };
+  $('supply-risk').innerHTML = `<div style='font-family:var(--font-mono);font-size:9.5px;color:var(--ghost);margin-bottom:8px'>Illustrative profile — not CIMAR actual supplier data</div>
+    <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-bottom:10px">
+      ${origins.map(o=>`
+        <div style="text-align:center;padding:10px 6px;background:var(--warm);border-radius:6px">
+          <div style="font-family:var(--font-serif);font-size:20px;color:${o.color}">${o.pct}%</div>
+          <div style="font-size:11px;font-weight:500;color:var(--muted);margin:3px 0">${o.name}</div>
+          <span class="badge ${riskBadge[o.risk]}"><span class="bd"></span>${o.risk}</span>
+        </div>`).join('')}
+    </div>
+    <div class="a-risk alert" style="margin:0">36% from HIGH-risk origins. Sanctions escalation → +$15–30/t within 60 days.</div>`;
+}
+
+// ── DIAGNOSTICS ───────────────────────────────────────────────────────────────
+function renderDiagnostics() {
+  const m = DATA.model, h = DATA.history;
+  // Commodity correlations
+  const brent  = h.map(d=>d.brent),  petcoke = h.map(d=>d.petcoke);
+  const gas    = h.map(d=>d.nat_gas), coal   = h.map(d=>d.coal);
+  function corr(a,b){ const n=a.length,ma=a.reduce((x,y)=>x+y)/n,mb=b.reduce((x,y)=>x+y)/n; return (a.reduce((s,x,i)=>s+(x-ma)*(b[i]-mb),0)) / Math.sqrt(a.reduce((s,x)=>s+(x-ma)**2,0)*b.reduce((s,x)=>s+(x-mb)**2,0)||1); }
+  const corrs = [
+    { pair:'Petcoke / Brent',   r:corr(brent,petcoke)  },
+    { pair:'Petcoke / Nat Gas', r:corr(gas,  petcoke)  },
+    { pair:'Petcoke / Coal',    r:corr(coal, petcoke)  },
+    { pair:'Brent / Nat Gas',   r:corr(brent,gas)      },
+  ];
+  $('corr-matrix').innerHTML = corrs.map(c=>{
+    const pct = Math.abs(c.r); const abs=pct.toFixed(2);
+    const color = c.r>0.7?'rgba(26,62,107,'+pct.toFixed(1)+')':c.r>0?'rgba(184,134,42,'+pct.toFixed(1)+')':'rgba(160,41,26,'+pct.toFixed(1)+')';
+    return `<div class="var-row">
+      <div class="vr-lbl">${c.pair}</div>
+      <div class="vr-val" style="color:var(--blue)">${c.r.toFixed(3)}</div>
+      <div class="vr-bar"><div class="vr-fill" style="width:${(pct*100).toFixed(0)}%;background:${color}"></div></div>
+      <div class="vr-pct">${(pct*100).toFixed(0)}%</div>
+    </div>`;
+  }).join('');
+
+  // Price rank
+  const petcoke_now = DATA.live.petcoke;
+  const sorted = [...h.map(d=>d.petcoke)].sort((a,b)=>a-b);
+  const rank   = sorted.findIndex(v=>v>=petcoke_now) / sorted.length * 100;
+  const pmin   = sorted[0], pmax = sorted[sorted.length-1], pmid = sorted[Math.floor(sorted.length/2)];
+  $('price-rank').innerHTML = `
+    <div style="margin-bottom:14px">
+      <div style="display:flex;justify-content:space-between;font-family:var(--font-mono);font-size:10px;color:var(--ghost);margin-bottom:6px">
+        <span>Min $${pmin}</span><span>Median $${pmid}</span><span>Max $${pmax}</span>
+      </div>
+      <div style="height:10px;background:linear-gradient(90deg,#4ade80,#d4a43a,#f87171);border-radius:5px;position:relative">
+        <div style="position:absolute;left:${rank.toFixed(0)}%;top:-16px;transform:translateX(-50%);font-family:var(--font-mono);font-size:9px;color:var(--ink)">▼</div>
+        <div style="position:absolute;left:${rank.toFixed(0)}%;width:2px;height:100%;background:var(--ink)"></div>
+      </div>
+    </div>
+    <div class="var-row" style="border-bottom:none;padding-top:4px">
+      <div class="vr-lbl">Current $${petcoke_now}/t</div>
+      <div class="vr-val">${rank.toFixed(0)}th pct.</div>
+      <div class="vr-bar"><div class="vr-fill" style="width:${rank.toFixed(0)}%;background:${rank<30?'#4ade80':rank>70?'#f87171':'#d4a43a'}"></div></div>
+      <div class="vr-pct">${rank.toFixed(0)}%</div>
+    </div>
+    <div style="font-size:11.5px;color:var(--muted);margin-top:10px;line-height:1.7">
+      ${rank < 30 ? 'Price is near historical lows — historically a favorable entry point.' : rank > 70 ? 'Price is elevated relative to 24-month history — consider deferring.' : 'Price is near the historical midpoint — neutral signal.'}
+    </div>`;
+
+  // Decomposition chart
+  const preds = m.predictions, resids = m.residuals;
+  mkChart('chart-decomp',{
+    type:'bar',
+    data:{ labels:h.map(d=>d.month.slice(0,7)), datasets:[
+      { label:'Explained (model)', data:preds.map(v=>parseFloat(v.toFixed(2))), backgroundColor:'rgba(26,92,40,.5)', borderRadius:2 },
+      { label:'Unexplained (ε)',   data:resids.map(v=>parseFloat(v.toFixed(2))), backgroundColor:resids.map(v=>v>=0?'rgba(184,134,42,.5)':'rgba(160,41,26,.4)'), borderRadius:2 },
+    ]},
+    options:{ ...lightOpts('$',true), scales:{x:{grid:{display:false},stacked:false,ticks:{font:{size:9},maxRotation:45}},y:{grid:{color:'rgba(0,0,0,.04)'},ticks:{font:{size:9},callback:v=>`$${v}`}}} }
+  });
+}
+
+function renderModelCompare(data) {
+  const rows = Object.entries(data).sort((a,b)=>parseInt(a[0])-parseInt(b[0]));
+  const bestR2 = Math.max(...rows.map(r=>r[1].r2));
+  $('mc-table').innerHTML = `<tr><td>Window</td><td></td></tr>` + rows.map(([w,s])=>`
+    <tr class="${s.r2===bestR2?'best':''}">
+      <td>${w}mo</td><td>R²=${(s.r2*100).toFixed(1)}% · β=${s.beta}</td>
+    </tr>`).join('');
+
+  $('diag-window-table').innerHTML = `
+    <table class="tbl">
+      <thead><tr><th>Window</th><th>R²</th><th>Adj R²</th><th>RMSE</th><th>MAE</th><th>α</th><th>β</th></tr></thead>
+      <tbody>${rows.map(([w,s])=>`
+        <tr>
+          <td class="${s.r2===bestR2?'tv':'tm'}">${w}mo</td>
+          <td class="${s.r2===bestR2?'tg':''}">${(s.r2*100).toFixed(1)}%</td>
+          <td>—</td>
+          <td class="tf">$${s.rmse}</td>
+          <td class="tf">$${s.mae}</td>
+          <td class="tf">${s.alpha}</td>
+          <td class="tf">${s.beta}</td>
+        </tr>`).join('')}
+      </tbody>
+    </table>`;
+}
+
+// ── BRIEFING ──────────────────────────────────────────────────────────────────
+async function runBriefing() {
+  if(!DATA) { alert('Run forecast first.'); return; }
+  const btn = event.target;
+  btn.disabled = true; btn.textContent = 'GENERATING...';
+  $('briefing-left').innerHTML  = '<div style="text-align:center;padding:48px;font-family:var(--font-mono);font-size:11px;color:var(--ghost)"><div style="width:24px;height:24px;border:2px solid var(--rule);border-top-color:var(--gold);border-radius:50%;animation:sp .7s linear infinite;margin:0 auto 12px"></div>Generating briefing...</div>';
+  $('briefing-right').innerHTML = '';
+  try {
+    const res = await fetch('/api/forecast', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({...getParams()}) });
+    const d   = await res.json();
+    buildBriefing(d);
+  } catch(e) { $('briefing-left').innerHTML = `<div class="cp"><p style="color:var(--red)">${e.message}</p></div>`; }
+  btn.disabled = false; btn.textContent = 'GENERATE BRIEFING';
+}
+
+function buildBriefing(d) {
+  const L = d.live, m = d.model, fc = d.forecast, best = d.best_month, worst = d.worst_month;
+  const ann_vol = d.params.annual_vol||180000, mad = d.params.mad_rate||9.94;
+  const buy_months = d.buy_months;
+  const scenario  = d.params.scenario;
+  const sc_labels = {base:'base case',bear:'bearish',bull:'bullish',contango:'contango',backwd:'backwardation',crisis:'geopolitical crisis',crash:'demand collapse'};
+
+  const sig = buy_months.length>0?'BUY':fc.some(f=>f.signal==='WATCH')?'WATCH':'MONITOR';
+  const sigCfg = {
+    BUY:    {txt:'BUY — Execute tranche purchase',     bg:'#e8f5e9',  border:'#a5d6a7',  dot:'#2e7d32', color:'var(--brand)'},
+    WATCH:  {txt:'WATCH — Await optimal entry point',  bg:'#fff8e1',   border:'#ffcc80', dot:'#e65100', color:'#e65100'},
+    MONITOR:{txt:'MONITOR — No clear opportunity',     bg:'#eceff1',    border:'#b0bec5',   dot:'#607d8b', color:'#455a64'},
+  }[sig];
+
+  const pct_best = ((best.point-L.petcoke)/L.petcoke*100).toFixed(1);
+  const saving   = Math.round((L.petcoke-best.point)*ann_vol);
+  const saving_m = (saving*mad/1e6).toFixed(1);
+  const fwd6     = fc[fc.length-1];
+  const spread   = (fwd6.p90-fwd6.p10).toFixed(1);
+  const cBeta = m.coal_beta||m.scatter_beta||0.82;
+  const crisis_price = (m.scatter_alpha + cBeta*(L.coal*1.30)).toFixed(1);
+
+  $('briefing-signal').style.display = 'block';
+  $('briefing-signal').innerHTML = `
+    <div class="signal-hero" style="background:${sigCfg.bg};border-color:${sigCfg.border}">
+      <div class="sh-indicator" style="background:${sigCfg.dot}"></div>
+      <div class="sh-text" style="color:${sigCfg.color}">${sigCfg.txt}</div>
+      <div class="sh-meta">Brent $${L.brent}/bbl · Petcoke $${L.petcoke}/t · ${new Date().toLocaleDateString('en-GB')}</div>
+    </div>`;
+
+  const sections_l = [
+    {
+      title:'Market Signal',
+      body:`Brent crude is trading at $${L.brent}/bbl, placing estimated high-sulphur petcoke at $${L.petcoke}/t CIF ARA under the ${sc_labels[scenario]||scenario} scenario.
+
+The ${m.type==='ols_multi'?'multiple':'simple'} OLS regression model (R²=${(m.r2*100).toFixed(1)}%, n=${m.n} observations, MAE=$${m.mae}/t) maps a $1/t coal move to ~$${(m.coal_beta||m.scatter_beta||0.82).toFixed(3)}/t petcoke. The forward curve under the current scenario points ${fc[2].point<L.petcoke?'lower':'higher'} — from $${L.petcoke} now to $${best.point}/t at the optimal window (${best.label}).
+
+The 80% confidence interval at 6 months is $${fwd6.p10}–$${fwd6.p90}/t (spread: $${spread}/t), driven by Brent vol (σ≈3.8%/month) + model residual uncertainty.`
+    },
+    {
+      title:'Model Diagnostics',
+      body:`Regression equation: Petcoke = ${m.alpha.toFixed(2)} + ${m.beta.toFixed(3)} × Coal${m.type==='ols_multi'?' + supplementary regressors (Nat Gas, Coal)':''}
+
+Key stats: R²=${(m.r2*100).toFixed(1)}% · Adj R²=${(m.adj_r2*100).toFixed(1)}% · RMSE=$${m.rmse}/t · MAE=$${m.mae}/t · Std Error=$${m.std_err}/t · β t-stat=${m.t_stat||'—'}
+
+Coal AR(1) process: φ=${m.ar1_phi} (${m.ar1_phi>0.8?'high persistence — shocks are long-lasting':'moderate persistence'}).
+
+Current petcoke/Brent ratio: ${L.petcoke_ratio} (24-month avg: ${m.avg_ratio}). ${parseFloat(L.petcoke_ratio)>parseFloat(m.avg_ratio)?'Above avg → petcoke trades rich to crude.':'Below avg → petcoke trades cheap to crude.'}`
+    }
+  ];
+  const sections_r = [
+    {
+      title:'Procurement Strategy',
+      body: buy_months.length>0
+        ? `The model identifies ${best.label} as the optimal entry point at $${best.point}/t (${pct_best}% vs. current). This implies estimated savings of $${saving.toLocaleString()} USD (MAD ${saving_m}M) versus buying at current prices, on a ${ann_vol.toLocaleString()}t annual base.
+
+Recommended approach:
+— Secure 20–25% of Q2 needs immediately to maintain supply buffer
+— Execute primary volume in ${best.label} when the P50 forecast touches $${best.point}/t
+— Set a trigger price of $${(best.point-m.std_err).toFixed(1)}/t — if hit before ${best.label}, accelerate full volume
+
+Monthly tranche average (${fc.slice(0,3).map(f=>f.label).join(', ')}): $${(fc.slice(0,3).reduce((a,b)=>a+b.point,0)/3).toFixed(1)}/t — viable as a hedge against model error.`
+        : `No strong buy signal under the current scenario (${scenario}). Forecast range $${Math.min(...fc.map(f=>f.point)).toFixed(1)}–$${Math.max(...fc.map(f=>f.point)).toFixed(1)}/t offers limited downside opportunity.
+
+Recommended: execute monthly tranches across the ${d.params.horizon}-month horizon to dollar-cost-average the $${spread}/t uncertainty band. Re-evaluate if scenario shifts to bear or if Brent breaks below $${(L.brent*0.90).toFixed(0)}/bbl.`
+    },
+    {
+      title:'Risk Factors',
+      body:`Supply concentration: 36% from high-risk origins (Russia 28%, Venezuela 8%). Any sanctions escalation or shipping disruption could add $15–30/t within 60 days with limited spot substitution.
+
+OPEC+ reversal: A surprise +1M bbl/day cut would push Brent +$8–12/bbl → petcoke +$${(8*m.beta).toFixed(1)}–$${(12*m.beta).toFixed(1)}/t, outside the current 80% CI.
+
+Currency risk: At MAD ${mad}/USD, a 5% MAD depreciation adds MAD ${(L.petcoke*ann_vol*0.05*mad/1e6).toFixed(1)}M/year without any USD price change.
+
+Crisis scenario (Brent +30% → $${(L.brent*1.30).toFixed(0)}/bbl): petcoke estimate ~$${crisis_price}/t — a ${(((crisis_price-L.petcoke)/L.petcoke)*100).toFixed(0)}% increase, adding MAD ${((crisis_price-L.petcoke)*ann_vol*mad/1e6).toFixed(1)}M to annual costs.`
+    }
+  ];
+
+  $('briefing-left').innerHTML  = sections_l.map(s=>`<div class="brief-block"><div class="bb-title">${s.title}</div><div class="bb-body">${s.body}</div></div>`).join('');
+  $('briefing-right').innerHTML = sections_r.map(s=>`<div class="brief-block"><div class="bb-title">${s.title}</div><div class="bb-body">${s.body}</div></div>`).join('');
+}
+
+// ── TAB NAVIGATION ────────────────────────────────────────────────────────────
+function showTab(name, btn) {
+  document.querySelectorAll('.tab-pane').forEach(el=>el.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(el=>el.classList.remove('active'));
+  const pane = $('tab-'+name);
+  if(pane) pane.classList.add('active');
+  if(btn)  btn.classList.add('active');
+  // Trigger chart resize on tab switch
+  setTimeout(()=>{ Object.values(CHARTS).forEach(c=>{ try{c.resize()}catch(e){} }) }, 50);
+}
+
+// ── INIT ─────────────────────────────────────────────────────────────────────
+(async () => {
+  // Start live price polling every 60 seconds
+  await fetchLive();
+  LIVE_INTERVAL = setInterval(fetchLive, 60000);
+  // Initial forecast
+  await runForecast();
+})();
+</script>
+</body>
+</html>
