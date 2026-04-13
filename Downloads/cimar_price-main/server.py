@@ -316,7 +316,7 @@ def compute_forecast(params):
     horizon=max(3,min(12,int(params.get("horizon",6))))
     scenario=str(params.get("scenario","base"))
     mc_seed=int(params.get("mc_seed",7)); n_sim=int(params.get("n_sim",1200))
-    buy_thr=float(params.get("buy_thr",-3.0)); avoid_thr=float(params.get("avoid_thr",3.0))
+    buy_thr=float(params.get("buy_thr",-0.5)); avoid_thr=float(params.get("avoid_thr",3.0))
     annual_vol=float(params.get("annual_vol",180000)); order_size=float(params.get("order_size",10000))
     mad_rate=float(params.get("mad_rate",9.94)); fmult=float(params.get("freight_mult",1.0))
     adj=float(params.get("petcoke_disc",0.0))+float(params.get("sulphur_adj",0.0))
@@ -340,6 +340,8 @@ def compute_forecast(params):
         c=ols_multi["coeffs"]
         petcoke_now=round(c[0]+c[1]*brent_now+c[2]*gas_now+c[3]*coal_now+adj,2)
     petcoke_now=max(20.0,petcoke_now)
+    petcoke_raw=round(float(CNN_MODEL._ols_pred(coal_now,brent_now,gas_now)),2) if CNN_MODEL.trained else petcoke_now
+    petcoke_raw=max(20.0,petcoke_raw)
     freight_now=round(hist[-1]["freight"]*fmult,2)
     landed_now=round(petcoke_now+freight_now,2)
     curr_ratio=petcoke_now/brent_now if brent_now>0 else 0
@@ -451,7 +453,7 @@ def compute_forecast(params):
 
     return {"live":{"brent":brent_now,"petcoke":petcoke_now,"freight":freight_now,"landed":landed_now,
                     "gas":gas_now,"coal":coal_now,"is_live":brent_live,"source":data_src,"ts":data_ts,
-                    "mad_rate":mad_rate,"petcoke_ratio":round(curr_ratio,3)},
+                    "mad_rate":mad_rate,"petcoke_ratio":round(curr_ratio,3),"petcoke_raw":petcoke_raw},
             "history":hist,"model":model_summary,"forecast":forecast,"scenarios":all_scenarios,
             "procurement":procurement,"sensitivity":sensitivity,"swing_per_10":round(10*annual_vol*mad_rate/1e6,2),
             "best_month":best,"worst_month":worst,"buy_months":buy_months,

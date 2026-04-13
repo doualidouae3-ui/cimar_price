@@ -612,8 +612,8 @@ input[type=range]::-webkit-slider-thumb:hover { transform:scale(1.2) }
   <div id="sidebar">
     <!-- Live KPIs -->
     <div class="mini-kpis">
-      <div class="mini-kpi"><div class="mk-lbl">Brent</div><div class="mk-val" id="sb-brent">—</div><div class="mk-sub">$/bbl · live</div></div>
-      <div class="mini-kpi"><div class="mk-lbl">Petcoke</div><div class="mk-val" id="sb-petcoke">—</div><div class="mk-sub">$/t · est.</div></div>
+      <div class="mini-kpi"><div class="mk-lbl">Brent</div><div class="mk-val" id="sb-brent">—</div><div class="mk-sub">$/bbl ● YAHOO LIVE</div></div>
+      <div class="mini-kpi"><div class="mk-lbl">Petcoke</div><div class="mk-val" id="sb-petcoke">—</div><div class="mk-sub" style="font-size:9px;letter-spacing:-.01em">est. via CNN from Brent</div></div>
       <div class="mini-kpi"><div class="mk-lbl">Nat Gas</div><div class="mk-val" id="sb-gas">—</div><div class="mk-sub">$/MMBtu · live</div></div>
       <div class="mini-kpi"><div class="mk-lbl">Freight</div><div class="mk-val" id="sb-freight">—</div><div class="mk-sub">$/t · BDI est.</div></div>
     </div>
@@ -666,8 +666,8 @@ input[type=range]::-webkit-slider-thumb:hover { transform:scale(1.2) }
     <div class="sb-section">
       <div class="sb-sec-lbl">Signal Thresholds</div>
       <div class="sb-field">
-        <div class="sb-lbl">Buy threshold <strong id="lbl-buy">−1.5%</strong></div>
-        <input type="range" id="p-buy" min="-15" max="-0.5" value="-1.5" step="0.5"
+        <div class="sb-lbl">Buy threshold <strong id="lbl-buy">−0.5%</strong></div>
+        <input type="range" id="p-buy" min="-15" max="-0.5" value="-0.5" step="0.5"
           oninput="document.getElementById('lbl-buy').textContent=parseFloat(this.value).toFixed(1)+'%'">
         <div class="range-labels"><span>−15%</span><span>−0.5%</span></div>
       </div>
@@ -1161,10 +1161,10 @@ function getParams() {
 }
 
 const PRESETS = {
-  standard:     { scenario:'base',   horizon:6,  window:240, model_type:'ols_multi', buy_thr:-3,  avoid_thr:3,  annual_vol:180000, order_size:10000,  mad_rate:9.94, freight_mult:1.0,  petcoke_disc:0, sulphur_adj:0,  n_sim:1200, mc_seed:7 },
-  conservative: { scenario:'bear',   horizon:6,  window:60, model_type:'ols_multi', buy_thr:-5,  avoid_thr:5,  annual_vol:180000, order_size:10000,  mad_rate:9.94, freight_mult:1.1,  petcoke_disc:2, sulphur_adj:0,  n_sim:1200, mc_seed:7 },
-  aggressive:   { scenario:'bull',   horizon:9,  window:60, model_type:'ols_multi', buy_thr:-2,  avoid_thr:2,  annual_vol:180000, order_size:20000,  mad_rate:9.94, freight_mult:0.9,  petcoke_disc:0, sulphur_adj:-2, n_sim:1200, mc_seed:7 },
-  crisis:       { scenario:'crisis', horizon:12, window:120, model_type:'ols_multi',  buy_thr:-8,  avoid_thr:8,  annual_vol:180000, order_size:5000,   mad_rate:10.2, freight_mult:1.5,  petcoke_disc:5, sulphur_adj:3,  n_sim:2000, mc_seed:42 },
+  standard:     { scenario:'base',   horizon:6,  window:240, model_type:'ols_multi', buy_thr:-0.5,avoid_thr:3,  annual_vol:180000, order_size:10000,  mad_rate:9.94, freight_mult:1.0,  petcoke_disc:0, sulphur_adj:0,  n_sim:1200, mc_seed:7 },
+  conservative: { scenario:'bear',   horizon:6,  window:60, model_type:'ols_multi', buy_thr:-0.5,avoid_thr:3,  annual_vol:180000, order_size:10000,  mad_rate:9.94, freight_mult:1.1,  petcoke_disc:2, sulphur_adj:0,  n_sim:1200, mc_seed:7 },
+  aggressive:   { scenario:'bull',   horizon:9,  window:60, model_type:'ols_multi', buy_thr:-0.5,avoid_thr:3,  annual_vol:180000, order_size:20000,  mad_rate:9.94, freight_mult:0.9,  petcoke_disc:0, sulphur_adj:-2, n_sim:1200, mc_seed:7 },
+  crisis:       { scenario:'crisis', horizon:12, window:120, model_type:'ols_multi',  buy_thr:-0.5,avoid_thr:3,  annual_vol:180000, order_size:5000,   mad_rate:10.2, freight_mult:1.5,  petcoke_disc:5, sulphur_adj:3,  n_sim:2000, mc_seed:42 },
   shortterm:    { scenario:'base',   horizon:3,  window:24,  model_type:'ols_multi', buy_thr:-2,  avoid_thr:3,  annual_vol:180000, order_size:15000,  mad_rate:9.94, freight_mult:1.0,  petcoke_disc:0, sulphur_adj:0,  n_sim:800,  mc_seed:7 },
   research:     { scenario:'base',   horizon:12, window:240, model_type:'ols_multi',  buy_thr:-4,  avoid_thr:4,  annual_vol:180000, order_size:10000,  mad_rate:9.94, freight_mult:1.0,  petcoke_disc:0, sulphur_adj:0,  n_sim:2000, mc_seed:99 },
 };
@@ -1310,11 +1310,12 @@ function renderAll() {
 function updateLivePrices() {
   const L = DATA.live;
   $('sb-brent').textContent   = '$' + L.brent;
-  $('sb-petcoke').textContent = '$' + L.petcoke;
+  $('sb-petcoke').textContent = '$' + (L.petcoke_raw||L.petcoke);
   $('sb-gas').textContent     = '$' + L.gas;
   $('sb-freight').textContent = '$' + L.freight;
   ['tk-brent','tk-brent2'].forEach(id=>$(id).textContent = '$'+L.brent+'/bbl');
-  ['tk-petcoke','tk-petcoke2'].forEach(id=>$(id).textContent = '$'+L.petcoke+'/t');
+  const _pc=L.petcoke_raw||L.petcoke;
+  ['tk-petcoke','tk-petcoke2'].forEach(id=>$(id).textContent = '$'+_pc+'/t');
   ['tk-landed','tk-landed2'].forEach(id=>$(id).textContent  = '$'+L.landed+'/t');
   ['tk-mad','tk-mad2'].forEach(id=>$(id).textContent = L.mad_rate);
   $('live-dot').className = 'live-dot' + (L.is_live ? '' : ' stale');
@@ -1341,7 +1342,7 @@ function renderKPIs() {
   const best = DATA.best_month;
   const pct  = fc[0].pct_vs_now;
   const kpis = [
-    { lbl:'Petcoke Spot',   val:'$'+L.petcoke, unit:'/t · regression est.',
+    { lbl:'Petcoke Spot',   val:'$'+(L.petcoke_raw||L.petcoke), unit:'/t · CNN est. from live Brent',
       delta: pct,         bar:0.72,  barColor:'#43a047' },
     { lbl:'Brent Crude',    val:'$'+L.brent,   unit:'/bbl · ' + (L.is_live?'live':'cached'),
       delta:null,         bar:0.68,  barColor:'#66bb6a' },
