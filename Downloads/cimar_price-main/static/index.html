@@ -1105,10 +1105,10 @@ function getParams() {
 
 const PRESETS = {
   standard:     { scenario:'base',   horizon:6,  window:240, model_type:'ols_multi', buy_thr:-3,  avoid_thr:3,  annual_vol:180000, order_size:10000,  mad_rate:9.94, freight_mult:1.0,  petcoke_disc:0, sulphur_adj:0,  n_sim:1200, mc_seed:7 },
-  conservative: { scenario:'bear',   horizon:6,  window:18, model_type:'ols_multi', buy_thr:-5,  avoid_thr:5,  annual_vol:180000, order_size:10000,  mad_rate:9.94, freight_mult:1.1,  petcoke_disc:2, sulphur_adj:0,  n_sim:1200, mc_seed:7 },
-  aggressive:   { scenario:'bull',   horizon:9,  window:12, model_type:'ols_multi', buy_thr:-2,  avoid_thr:2,  annual_vol:180000, order_size:20000,  mad_rate:9.94, freight_mult:0.9,  petcoke_disc:0, sulphur_adj:-2, n_sim:1200, mc_seed:7 },
-  crisis:       { scenario:'crisis', horizon:12, window:18, model_type:'ols_multi',  buy_thr:-8,  avoid_thr:8,  annual_vol:180000, order_size:5000,   mad_rate:10.2, freight_mult:1.5,  petcoke_disc:5, sulphur_adj:3,  n_sim:2000, mc_seed:42 },
-  shortterm:    { scenario:'base',   horizon:3,  window:6,  model_type:'ols_multi', buy_thr:-2,  avoid_thr:3,  annual_vol:180000, order_size:15000,  mad_rate:9.94, freight_mult:1.0,  petcoke_disc:0, sulphur_adj:0,  n_sim:800,  mc_seed:7 },
+  conservative: { scenario:'bear',   horizon:6,  window:60, model_type:'ols_multi', buy_thr:-5,  avoid_thr:5,  annual_vol:180000, order_size:10000,  mad_rate:9.94, freight_mult:1.1,  petcoke_disc:2, sulphur_adj:0,  n_sim:1200, mc_seed:7 },
+  aggressive:   { scenario:'bull',   horizon:9,  window:60, model_type:'ols_multi', buy_thr:-2,  avoid_thr:2,  annual_vol:180000, order_size:20000,  mad_rate:9.94, freight_mult:0.9,  petcoke_disc:0, sulphur_adj:-2, n_sim:1200, mc_seed:7 },
+  crisis:       { scenario:'crisis', horizon:12, window:120, model_type:'ols_multi',  buy_thr:-8,  avoid_thr:8,  annual_vol:180000, order_size:5000,   mad_rate:10.2, freight_mult:1.5,  petcoke_disc:5, sulphur_adj:3,  n_sim:2000, mc_seed:42 },
+  shortterm:    { scenario:'base',   horizon:3,  window:24,  model_type:'ols_multi', buy_thr:-2,  avoid_thr:3,  annual_vol:180000, order_size:15000,  mad_rate:9.94, freight_mult:1.0,  petcoke_disc:0, sulphur_adj:0,  n_sim:800,  mc_seed:7 },
   research:     { scenario:'base',   horizon:12, window:240, model_type:'ols_multi',  buy_thr:-4,  avoid_thr:4,  annual_vol:180000, order_size:10000,  mad_rate:9.94, freight_mult:1.0,  petcoke_disc:0, sulphur_adj:0,  n_sim:2000, mc_seed:99 },
 };
 
@@ -1815,11 +1815,15 @@ function renderDiagnostics() {
 }
 
 function renderModelCompare(data) {
-  const rows = Object.entries(data).sort((a,b)=>parseInt(a[0])-parseInt(b[0]));
+  const rows = Object.entries(data).sort((a,b)=>{
+    if(a[0]==='cnn_full') return 1; if(b[0]==='cnn_full') return -1;
+    return parseInt(a[0])-parseInt(b[0]);
+  });
   const bestR2 = Math.max(...rows.map(r=>r[1].r2));
   $('mc-table').innerHTML = `<tr><td>Window</td><td></td></tr>` + rows.map(([w,s])=>`
     <tr class="${s.r2===bestR2?'best':''}">
-      <td>${w}mo</td><td>R²=${(s.r2*100).toFixed(1)}% · β=${s.beta}</td>
+      <td>${w==='cnn_full'?'★ CNN (full 20yr)':w+'mo (OLS)'}</td>
+      <td>R²=${(s.r2*100).toFixed(1)}% · β=${s.beta}</td>
     </tr>`).join('');
 
   $('diag-window-table').innerHTML = `
@@ -1827,7 +1831,7 @@ function renderModelCompare(data) {
       <thead><tr><th>Window</th><th>R²</th><th>Adj R²</th><th>RMSE</th><th>MAE</th><th>α</th><th>β</th></tr></thead>
       <tbody>${rows.map(([w,s])=>`
         <tr>
-          <td class="${s.r2===bestR2?'tv':'tm'}">${w}mo</td>
+          <td class="${s.r2===bestR2?'tv':'tm'}">${w==='cnn_full'?'★ CNN (20yr)':w+'mo OLS'}</td>
           <td class="${s.r2===bestR2?'tg':''}">${(s.r2*100).toFixed(1)}%</td>
           <td>—</td>
           <td class="tf">$${s.rmse}</td>
