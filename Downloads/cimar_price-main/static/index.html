@@ -666,8 +666,8 @@ input[type=range]::-webkit-slider-thumb:hover { transform:scale(1.2) }
     <div class="sb-section">
       <div class="sb-sec-lbl">Signal Thresholds</div>
       <div class="sb-field">
-        <div class="sb-lbl">Buy threshold <strong id="lbl-buy">−0.5%</strong></div>
-        <input type="range" id="p-buy" min="-15" max="-0.5" value="-0.5" step="0.5"
+        <div class="sb-lbl">Buy threshold <strong id="lbl-buy">−1.0%</strong></div>
+        <input type="range" id="p-buy" min="-15" max="-0.5" value="-1.0" step="0.5"
           oninput="document.getElementById('lbl-buy').textContent=parseFloat(this.value).toFixed(1)+'%'">
         <div class="range-labels"><span>−15%</span><span>−0.5%</span></div>
       </div>
@@ -801,22 +801,41 @@ input[type=range]::-webkit-slider-thumb:hover { transform:scale(1.2) }
           </div>
 
           <!-- Main info -->
-          <div style="flex:1;padding:20px 24px;background:#fff;display:flex;flex-direction:column;justify-content:center">
-            <div id="dc-headline" style="font-family:var(--font-ui);font-size:20px;font-weight:700;
-              color:var(--ink);line-height:1.3;margin-bottom:10px">—</div>
-            <div style="display:flex;gap:24px;flex-wrap:wrap">
-              <div><div style="font-family:var(--font-mono);font-size:9px;text-transform:uppercase;
-                letter-spacing:.12em;color:var(--ghost);margin-bottom:3px">Optimal Window</div>
-                <div id="dc-window" style="font-family:var(--font-ui);font-size:17px;font-weight:700;color:var(--brand)">—</div></div>
-              <div><div style="font-family:var(--font-mono);font-size:9px;text-transform:uppercase;
-                letter-spacing:.12em;color:var(--ghost);margin-bottom:3px">Target Price</div>
-                <div id="dc-price" style="font-family:var(--font-ui);font-size:17px;font-weight:700;color:var(--ink)">—</div></div>
-              <div><div style="font-family:var(--font-mono);font-size:9px;text-transform:uppercase;
-                letter-spacing:.12em;color:var(--ghost);margin-bottom:3px">vs Current</div>
-                <div id="dc-pct" style="font-family:var(--font-ui);font-size:17px;font-weight:700">—</div></div>
-              <div><div style="font-family:var(--font-mono);font-size:9px;text-transform:uppercase;
-                letter-spacing:.12em;color:var(--ghost);margin-bottom:3px">Est. Annual Saving</div>
-                <div id="dc-saving" style="font-family:var(--font-ui);font-size:17px;font-weight:700;color:var(--brand)">—</div></div>
+          <div style="flex:1;padding:18px 22px;background:#fff;display:flex;flex-direction:column;justify-content:center">
+            <!-- Scenario badge + headline -->
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+              <span id="dc-scenario-badge" style="font-family:var(--font-mono);font-size:9px;font-weight:700;
+                text-transform:uppercase;letter-spacing:.12em;padding:3px 8px;border-radius:3px;
+                background:#e8f5e9;color:var(--brand);border:1px solid var(--rule2)">BASE</span>
+              <div id="dc-headline" style="font-family:var(--font-ui);font-size:14px;font-weight:600;
+                color:var(--muted);line-height:1.3">—</div>
+            </div>
+            <!-- Big month + key numbers -->
+            <div style="display:flex;align-items:center;gap:28px;flex-wrap:wrap">
+              <div>
+                <div style="font-family:var(--font-mono);font-size:9px;text-transform:uppercase;
+                  letter-spacing:.12em;color:var(--ghost);margin-bottom:2px">Optimal Window</div>
+                <div id="dc-window" style="font-family:var(--font-ui);font-size:28px;font-weight:800;
+                  color:var(--brand);line-height:1;letter-spacing:-.02em">—</div>
+              </div>
+              <div style="width:1px;height:40px;background:var(--rule)"></div>
+              <div>
+                <div style="font-family:var(--font-mono);font-size:9px;text-transform:uppercase;
+                  letter-spacing:.12em;color:var(--ghost);margin-bottom:2px">Target Price</div>
+                <div id="dc-price" style="font-family:var(--font-ui);font-size:24px;font-weight:700;
+                  color:var(--ink);line-height:1">—</div>
+              </div>
+              <div>
+                <div style="font-family:var(--font-mono);font-size:9px;text-transform:uppercase;
+                  letter-spacing:.12em;color:var(--ghost);margin-bottom:2px">vs Current</div>
+                <div id="dc-pct" style="font-family:var(--font-ui);font-size:20px;font-weight:700;line-height:1">—</div>
+              </div>
+              <div>
+                <div style="font-family:var(--font-mono);font-size:9px;text-transform:uppercase;
+                  letter-spacing:.12em;color:var(--ghost);margin-bottom:2px">Est. Annual Saving</div>
+                <div id="dc-saving" style="font-family:var(--font-ui);font-size:20px;font-weight:700;
+                  color:var(--brand);line-height:1">—</div>
+              </div>
             </div>
           </div>
 
@@ -1161,10 +1180,10 @@ function getParams() {
 }
 
 const PRESETS = {
-  standard:     { scenario:'base',   horizon:6,  window:240, model_type:'ols_multi', buy_thr:-0.5,avoid_thr:3,  annual_vol:180000, order_size:10000,  mad_rate:9.94, freight_mult:1.0,  petcoke_disc:0, sulphur_adj:0,  n_sim:1200, mc_seed:7 },
-  conservative: { scenario:'bear',   horizon:6,  window:60, model_type:'ols_multi', buy_thr:-0.5,avoid_thr:3,  annual_vol:180000, order_size:10000,  mad_rate:9.94, freight_mult:1.1,  petcoke_disc:2, sulphur_adj:0,  n_sim:1200, mc_seed:7 },
-  aggressive:   { scenario:'bull',   horizon:9,  window:60, model_type:'ols_multi', buy_thr:-0.5,avoid_thr:3,  annual_vol:180000, order_size:20000,  mad_rate:9.94, freight_mult:0.9,  petcoke_disc:0, sulphur_adj:-2, n_sim:1200, mc_seed:7 },
-  crisis:       { scenario:'crisis', horizon:12, window:120, model_type:'ols_multi',  buy_thr:-0.5,avoid_thr:3,  annual_vol:180000, order_size:5000,   mad_rate:10.2, freight_mult:1.5,  petcoke_disc:5, sulphur_adj:3,  n_sim:2000, mc_seed:42 },
+  standard:     { scenario:'base',   horizon:6,  window:240, model_type:'ols_multi', buy_thr:-1.0,avoid_thr:3,  annual_vol:180000, order_size:10000,  mad_rate:9.94, freight_mult:1.0,  petcoke_disc:0, sulphur_adj:0,  n_sim:1200, mc_seed:7 },
+  conservative: { scenario:'bear',   horizon:6,  window:60, model_type:'ols_multi', buy_thr:-0.5,avoid_thr:4,  annual_vol:180000, order_size:10000,  mad_rate:9.94, freight_mult:1.1,  petcoke_disc:2, sulphur_adj:0,  n_sim:1200, mc_seed:7 },
+  aggressive:   { scenario:'bull',   horizon:9,  window:60, model_type:'ols_multi', buy_thr:-2.0,avoid_thr:2,  annual_vol:180000, order_size:20000,  mad_rate:9.94, freight_mult:0.9,  petcoke_disc:0, sulphur_adj:-2, n_sim:1200, mc_seed:7 },
+  crisis:       { scenario:'crisis', horizon:12, window:120, model_type:'ols_multi',  buy_thr:-0.5,avoid_thr:5,  annual_vol:180000, order_size:5000,   mad_rate:10.2, freight_mult:1.5,  petcoke_disc:5, sulphur_adj:3,  n_sim:2000, mc_seed:42 },
   shortterm:    { scenario:'base',   horizon:3,  window:24,  model_type:'ols_multi', buy_thr:-2,  avoid_thr:3,  annual_vol:180000, order_size:15000,  mad_rate:9.94, freight_mult:1.0,  petcoke_disc:0, sulphur_adj:0,  n_sim:800,  mc_seed:7 },
   research:     { scenario:'base',   horizon:12, window:240, model_type:'ols_multi',  buy_thr:-4,  avoid_thr:4,  annual_vol:180000, order_size:10000,  mad_rate:9.94, freight_mult:1.0,  petcoke_disc:0, sulphur_adj:0,  n_sim:2000, mc_seed:99 },
 };
@@ -1450,21 +1469,53 @@ function renderRatioChart(hist, chartId) {
 // ── INSIGHT CARDS ─────────────────────────────────────────────────────────────
 function renderInsights() {
   const L = DATA.live, fc = DATA.forecast, best = DATA.best_month;
-  const r2pct = (DATA.model.r2*100).toFixed(1);
-  const spread6 = (fc[fc.length-1].p90 - fc[fc.length-1].p10).toFixed(1);
+  const M = DATA.model;
   const fwd6  = fc[fc.length-1].point;
-  const pct6  = ((fwd6-L.petcoke)/L.petcoke*100).toFixed(1);
+  const pct6  = ((fwd6-(L.petcoke_raw||L.petcoke))/(L.petcoke_raw||L.petcoke)*100).toFixed(1);
+  const buys  = fc.filter(f=>f.signal==='BUY');
+  const sc    = (DATA.params.scenario||'base').toUpperCase();
+  const spread= (fc[fc.length-1].p90 - fc[fc.length-1].p10).toFixed(1);
 
   const items = [
-    { lbl:'6-Month Price Trend', val:`${parseFloat(pct6)>0?'+':''}${pct6}%`, detail:`$${L.petcoke} → $${fwd6}/t`, accent:'var(--brand)' },
-    { lbl:'Optimal Buy Window',  val:best.label, detail:`$${best.point}/t · ${best.pct_vs_now.toFixed(1)}% vs now`, accent:'var(--brand3)' },
-    
+    {
+      lbl: '6-Month Outlook',
+      val: `${parseFloat(pct6)>0?'+':''}${pct6}%`,
+      sub: `$${L.petcoke_raw||L.petcoke} → $${fwd6}/t under ${sc}`,
+      detail: `80% CI: $${fc[fc.length-1].p10}–$${fc[fc.length-1].p90} (±$${(spread/2).toFixed(0)}/t)`,
+      accent: parseFloat(pct6)<0?'var(--brand)':'var(--red)',
+      icon: parseFloat(pct6)<0?'▼':'▲',
+    },
+    {
+      lbl: 'Recommended Entry',
+      val: best.label,
+      sub: buys.length>0
+        ? `✔ ${buys.length} BUY window${buys.length>1?'s':''} identified`
+        : '◎ Monitor — no strong entry yet',
+      detail: `$${best.point}/t landed · ${best.pct_vs_now<0?'':'+'+(best.pct_vs_now.toFixed(1))}${best.pct_vs_now<0?best.pct_vs_now.toFixed(1):''}% vs current`,
+      accent: buys.length>0?'var(--brand)':'var(--ghost)',
+      icon: buys.length>0?'★':'○',
+    },
+    {
+      lbl: 'CNN Model Quality',
+      val: `${(M.r2*100).toFixed(1)}%`,
+      sub: `R² in-sample · ${(M.n_train||1044).toLocaleString()} weekly obs`,
+      detail: `MAE \$${M.mae.toFixed(1)}/t · Dir. Acc. ${(M.dir_acc||55).toFixed(0)}% · Residual σ\$${M.std_err.toFixed(1)}`,
+      accent: M.r2>0.8?'var(--brand3)':'var(--amber)',
+      icon: '◆',
+    },
   ];
+
   $('insight-row').innerHTML = items.map(i=>`
     <div class="card cp-sm" style="border-left:3px solid ${i.accent}">
-      <div style="font-family:var(--font-mono);font-size:9px;text-transform:uppercase;letter-spacing:.1em;color:var(--ghost);margin-bottom:6px">${i.lbl}</div>
-      <div style="font-family:var(--font-serif);font-size:24px;font-weight:300;color:var(--ink);line-height:1;margin-bottom:4px">${i.val}</div>
-      <div style="font-size:11px;color:var(--muted)">${i.detail}</div>
+      <div style="display:flex;align-items:center;gap:7px;margin-bottom:6px">
+        <span style="color:${i.accent};font-size:11px">${i.icon}</span>
+        <span style="font-family:var(--font-mono);font-size:9px;text-transform:uppercase;
+          letter-spacing:.1em;color:var(--ghost)">${i.lbl}</span>
+      </div>
+      <div style="font-family:var(--font-ui);font-size:26px;font-weight:700;color:var(--ink);
+        line-height:1;margin-bottom:3px;letter-spacing:-.02em">${i.val}</div>
+      <div style="font-size:11px;font-weight:600;color:${i.accent};margin-bottom:3px">${i.sub}</div>
+      <div style="font-family:var(--font-mono);font-size:9.5px;color:var(--ghost);line-height:1.5">${i.detail}</div>
     </div>`).join('');
 }
 
@@ -2128,6 +2179,15 @@ function renderDecisionCard() {
     </div>`).join('');
 
   $('dc-scenario-lbl').textContent = `Scenario: ${(DATA.params.scenario||'base').toUpperCase()} · Click any month for detail`;
+  const badge = $('dc-scenario-badge');
+  if(badge){
+    const sc = (DATA.params.scenario||'base').toUpperCase();
+    const scColors = {BASE:'#e8f5e9,var(--brand)',BEAR:'#e3f2fd,#1565c0',BULL:'#fff3e0,#e65100',
+      CONTANGO:'#f3e5f5,#7b1fa2',BACKWD:'#e8eaf6,#3949ab',CRISIS:'#ffebee,#c62828',CRASH:'#fce4ec,#ad1457'};
+    const [bg,color] = (scColors[sc]||scColors.BASE).split(',');
+    badge.style.background=bg; badge.style.color=color;
+    badge.style.borderColor=color; badge.textContent=sc+' SCENARIO';
+  }
 }
 
 
